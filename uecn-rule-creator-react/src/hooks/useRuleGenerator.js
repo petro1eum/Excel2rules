@@ -120,33 +120,148 @@ export const useRuleGenerator = (loadedFiles, showToast) => {
             }
         });
         
-        // Собираем данные подготовки
-        const dataPreparation = dynamicItems.dataPreparation
-            .map(item => item.action)
-            .filter(action => action);
+        // Собираем данные подготовки в структурированном виде
+        const dataPreparation = {
+            описание: "Подготовка данных перед проверкой",
+            действия: dynamicItems.dataPreparation
+                .filter(item => item.action)
+                .map(item => {
+                    // Пытаемся парсить структурированные действия
+                    const action = item.action;
+                    
+                    // Проверяем типовые паттерны действий
+                    if (action.includes('формат') && action.includes('дат')) {
+                        const fieldMatch = action.match(/поле[:\s]*['"]?([^'"]+)['"]?/i);
+                        const formatMatch = action.match(/формат[:\s]*['"]?([^'"]+)['"]?/i) || 
+                                          action.match(/YYYY-MM-DD(?:\s+HH:mm:ss)?/);
+                        return {
+                            type: "format_date",
+                            field: fieldMatch ? fieldMatch[1] : "all_date_fields",
+                            format: formatMatch ? formatMatch[1]?.replace(/^[уык]\s+/, '') || formatMatch[0] : "YYYY-MM-DD HH:mm:ss",
+                            description: action
+                        };
+                    }
+                    
+                    if (action.includes('заменить') || action.includes('NULL')) {
+                        const fieldMatch = action.match(/поле[:\s]*['"]?([^'"]+)['"]?/i);
+                        return {
+                            type: "replace_null",
+                            field: fieldMatch ? fieldMatch[1] : "all_fields",
+                            replace_with: "",
+                            description: action
+                        };
+                    }
+                    
+                    // Для других действий возвращаем как есть
+                    return {
+                        type: "custom",
+                        description: action
+                    };
+                })
+        };
         
-        // Собираем условия
+        // Собираем условия в исполняемом формате
         const conditions = dynamicItems.conditions
+            .filter(item => item.field)
             .map(item => ({
                 field: item.field,
-                check: item.check,
-                value: item.value,
-                options: {}
-            }))
-            .filter(condition => condition.field);
+                operator: item.check,
+                value: item.value || "",
+                // Определяем тип значения только для операторов, где это важно
+                value_type: item.check === 'not_empty' || item.check === 'empty' ? undefined :
+                           item.value && item.value.includes('.') ? "field_reference" : 
+                           item.value && !isNaN(item.value) ? "number" : "string"
+            }));
         
-        // Собираем проверки
-        const validationChecks = dynamicItems.validationChecks
-            .map(item => item.check)
-            .filter(check => check);
-        
-        // Собираем стратегии объединения
-        const mergeStrategies = {};
-        dynamicItems.mergeFields.forEach(item => {
-            if (item.field) {
-                mergeStrategies[item.field] = item.strategy;
+        // Парсим формулы из actionDetails
+        const formulas = {};
+        let hasConditionalLogic = false;
+        if (ruleData.actionDetails) {
+            // Ищем паттерны формул вида "поле = выражение" или "поле: выражение"
+            const formulaMatches = ruleData.actionDetails.match(/['"]?(\w+)['"]?\s*[:=]\s*([^,\n]+)/g);
+            if (formulaMatches) {
+                formulaMatches.forEach(match => {
+                    const parts = match.split(/[:=]/);
+                    if (parts.length < 2) return;
+                    
+                    const field = parts[0].trim().replace(/['"]/g, '');
+                    const formula = parts.slice(1).join('=').trim().replace(/['"]/g, '');
+                    
+                    // Игнорируем пустые или неполные формулы
+                    if (!field || !formula || formula.length < 3) return;
+                    
+                    // Проверяем, является ли это проблемным названием поля
+                    if (field.includes('=') || field.includes('?')) {
+                        // Пропускаем проблемные названия полей
+                        return;
+                    }
+                    
+                    // Преобразуем текстовые формулы в исполняемые
+                    let executableFormula = formula;
+                    
+                    // Замена текстовых операций на SQL/Excel синтаксис
+                    executableFormula = executableFormula
+                        .replace(/\s*\+\s*1\s*час/gi, ' + INTERVAL 1 HOUR')
+                        .replace(/больше\s+(\d+)\s+дн/gi, '> $1')
+                        .replace(/если\s+/gi, 'IF(')
+                        .replace(/\s+то\s+/gi, ', ')
+                        .replace(/\s+иначе\s+/gi, ', ')
+                        .replace(/разница между/gi, 'DATEDIFF(')
+                        .replace(/\sи\s/gi, ', ');
+                    
+                    formulas[field] = executableFormula;
+                });
             }
-        });
+            
+            // Проверяем наличие условной логики (IF/THEN/ELSE)
+            const conditionalPatterns = [
+                /IF\s*\(/i,
+                /CASE\s+WHEN/i,
+                /Если\s+\d+\s+то/i,
+                /ЕСЛИ.*ТО.*ИНАЧЕ/i,
+                /условие\s*=\s*\d+/i
+            ];
+            
+            hasConditionalLogic = conditionalPatterns.some(pattern => pattern.test(ruleData.actionDetails));
+        }
+        
+        // Собираем проверки в структурированном виде
+        const validationChecks = dynamicItems.validationChecks
+            .filter(item => item.check)
+            .map(item => {
+                const check = item.check;
+                
+                // Парсим типовые проверки
+                if (check.includes('должна быть заполнена') || check.includes('должно быть заполнено')) {
+                    const fieldMatch = check.match(/['"]?(\w+)['"]?/);
+                    return {
+                        type: "not_null",
+                        field: fieldMatch ? fieldMatch[1] : null,
+                        message: check
+                    };
+                }
+                
+                if (check.includes('не должна превышать') || check.includes('не больше')) {
+                    const fieldMatch = check.match(/между\s+['"]?(\w+)['"]?\s+и\s+['"]?(\w+)['"]?/i);
+                    const valueMatch = check.match(/(\d+)\s*дн/);
+                    
+                    if (fieldMatch || valueMatch) {
+                        return {
+                            type: "max_difference",
+                            field1: fieldMatch ? fieldMatch[1] : "Дата_прихода_на_базу",
+                            field2: fieldMatch ? fieldMatch[2] : "Дата_приходной_накладной",
+                            max_value: valueMatch ? parseInt(valueMatch[1]) : 7,
+                            unit: "days",
+                            message: check
+                        };
+                    }
+                }
+                
+                return {
+                    type: "custom",
+                    check: check
+                };
+            });
         
         const rule = {
             rule_id: `RULE${String(ruleCounter.current++).padStart(3, '0')}`,
@@ -158,10 +273,7 @@ export const useRuleGenerator = (loadedFiles, showToast) => {
             
             data_sources: dataSourcesInfo,
             
-            data_preparation: {
-                описание: "Подготовка данных перед проверкой",
-                действия: dataPreparation
-            },
+            data_preparation: dataPreparation,
             
             when: {
                 описание: "Условия применения правила",
@@ -175,6 +287,14 @@ export const useRuleGenerator = (loadedFiles, showToast) => {
             what_to_do: {
                 action: ruleData.mainAction,
                 details: ruleData.actionDetails,
+                // Добавляем formulas только если они не пустые
+                ...(Object.keys(formulas).length > 0 && { formulas }),
+                // Добавляем logic только если есть реальная условная логика
+                ...(hasConditionalLogic && { 
+                    logic: { 
+                        условная_логика: ruleData.actionDetails 
+                    } 
+                }),
                 handle_conflicts: ruleData.handleConflicts || null,
                 handle_errors: ruleData.handleErrors
             },
@@ -198,7 +318,12 @@ export const useRuleGenerator = (loadedFiles, showToast) => {
                 описание: "Обработка дубликатов",
                 ключевые_поля: ruleData.duplicateKeys.split(',').map(s => s.trim()),
                 стратегия: ruleData.duplicateStrategy,
-                при_объединении: mergeStrategies
+                при_объединении: dynamicItems.mergeFields
+                    .filter(item => item.field)
+                    .reduce((acc, item) => {
+                        acc[item.field] = item.strategy;
+                        return acc;
+                    }, {})
             };
         }
         

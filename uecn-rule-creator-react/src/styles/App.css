@@ -1,3 +1,8 @@
+/* 🎯 ОДНО МЕСТО ДЛЯ ИЗМЕНЕНИЯ ШИРИНЫ */
+:root {
+    --container-max-width: 1200px;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -13,8 +18,11 @@ body {
     line-height: 1.6;
 }
 
+/* 🎯 УПРАВЛЕНИЕ ПРАВОЙ ГРАНИЦЕЙ */
+
+/* 1️⃣ Общая ширина всего приложения */
 .container {
-    max-width: 1600px;
+    max-width: var(--container-max-width);        /* Использует переменную */
     margin: 0 auto;
     animation: fadeIn 0.5s ease-out;
 }
@@ -52,16 +60,18 @@ h1 {
     align-items: flex-start;
 }
 
+/* 2️⃣ Ширина основной секции */
 .form-section {
     flex: 1;
     display: flex;
     flex-direction: column;
     gap: 20px;
-    max-width: 800px;
+    max-width: 800px;         /* Ограничить ширину левой части */
 }
 
+/* 3️⃣ Ширина боковой панели (влияет на правую границу основного контента) */
 .examples-panel {
-    flex: 0 0 420px;
+    flex: 0 0 420px;          /* Изменить ширину панели справа */
     background: rgba(0, 200, 255, 0.02);
     border: 1px solid rgba(0, 200, 255, 0.1);
     border-radius: 12px;
@@ -1065,7 +1075,7 @@ input:checked + .toggle-slider:before {
 
 @media (max-width: 1200px) {
     .container {
-        max-width: 100%;
+        max-width: var(--container-max-width);
     }
     
     .main-layout {
@@ -1086,7 +1096,7 @@ input:checked + .toggle-slider:before {
 
 @media (min-width: 1600px) {
     .container {
-        max-width: 1800px;
+        max-width: var(--container-max-width);
     }
     
     .examples-panel {
@@ -1923,4 +1933,35 @@ body.simple-mode .sheet-toggle-fields.expanded {
     margin-top: 16px;
     padding-top: 16px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.hint-text {
+    font-size: 0.85rem;
+    color: #666;
+    font-style: italic;
+}
+
+/* Подсказка для форм */
+.form-hint {
+    margin-top: 8px;
+    padding: 12px;
+    background-color: rgba(0, 212, 255, 0.05);
+    border-left: 3px solid rgba(0, 212, 255, 0.3);
+    border-radius: 4px;
+    font-size: 0.875rem;
+    color: #888;
+    line-height: 1.5;
+    backdrop-filter: blur(5px);
+}
+
+.form-hint br {
+    margin-bottom: 4px;
+}
+
+/* Files Section */
+.files-section {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 } 
