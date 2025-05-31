@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import * as XLSX from 'xlsx';
 
 export const useFileManager = (showToast) => {
@@ -6,7 +6,7 @@ export const useFileManager = (showToast) => {
     const [availableFields, setAvailableFields] = useState([]);
     const [fieldDescriptions, setFieldDescriptions] = useState({});
 
-    const generateFileAlias = (fileName) => {
+    const generateFileAlias = useCallback((fileName) => {
         // Генерируем короткий алиас из имени файла
         const nameWithoutExt = fileName.replace(/\.[^/.]+$/, "");
         const cleaned = nameWithoutExt
@@ -23,7 +23,7 @@ export const useFileManager = (showToast) => {
         }
         
         return alias;
-    };
+    }, [loadedFiles]);
 
     const extractHeadersForSheet = (sheet) => {
         const fieldNames = [];
@@ -108,7 +108,7 @@ export const useFileManager = (showToast) => {
         return { fieldNames, descriptions };
     };
 
-    const handleFile = (file) => {
+    const handleFile = useCallback((file) => {
         const reader = new FileReader();
         reader.onload = function(e) {
             try {
@@ -174,15 +174,15 @@ export const useFileManager = (showToast) => {
             }
         };
         reader.readAsArrayBuffer(file);
-    };
+    }, [generateFileAlias, showToast]);
 
-    const handleMultipleFiles = (files) => {
+    const handleMultipleFiles = useCallback((files) => {
         Array.from(files).forEach(file => {
             handleFile(file);
         });
-    };
+    }, [handleFile]);
 
-    const updateGlobalFields = () => {
+    const updateGlobalFields = useCallback(() => {
         const newAvailableFields = [];
         const newFieldDescriptions = {};
         
@@ -206,9 +206,9 @@ export const useFileManager = (showToast) => {
 
         setAvailableFields(newAvailableFields);
         setFieldDescriptions(newFieldDescriptions);
-    };
+    }, [loadedFiles]);
 
-    const toggleSheet = (fileId, sheetName, selected) => {
+    const toggleSheet = useCallback((fileId, sheetName, selected) => {
         setLoadedFiles(prev => {
             if (prev[fileId] && prev[fileId].sheets[sheetName]) {
                 const newFiles = { ...prev };
@@ -220,9 +220,9 @@ export const useFileManager = (showToast) => {
 
         const action = selected ? 'добавлен' : 'исключен';
         showToast(`Лист "${sheetName}" ${action}`);
-    };
+    }, [showToast]);
 
-    const selectAllSheets = (fileId) => {
+    const selectAllSheets = useCallback((fileId) => {
         setLoadedFiles(prev => {
             if (prev[fileId]) {
                 const newFiles = { ...prev };
@@ -234,9 +234,9 @@ export const useFileManager = (showToast) => {
             return prev;
         });
         showToast('Все листы выбраны');
-    };
+    }, [showToast]);
 
-    const selectNoSheets = (fileId) => {
+    const selectNoSheets = useCallback((fileId) => {
         setLoadedFiles(prev => {
             if (prev[fileId]) {
                 const newFiles = { ...prev };
@@ -248,9 +248,9 @@ export const useFileManager = (showToast) => {
             return prev;
         });
         showToast('Все листы исключены');
-    };
+    }, [showToast]);
 
-    const updateSheetAlias = (fileId, sheetName, newAlias) => {
+    const updateSheetAlias = useCallback((fileId, sheetName, newAlias) => {
         if (!newAlias.trim()) {
             showToast('Алиас листа не может быть пустым', 'error');
             return;
@@ -279,9 +279,9 @@ export const useFileManager = (showToast) => {
         });
 
         showToast('Алиас листа обновлен');
-    };
+    }, [loadedFiles, showToast]);
 
-    const updateFileAlias = (fileId, newAlias) => {
+    const updateFileAlias = useCallback((fileId, newAlias) => {
         if (!newAlias.trim()) {
             showToast('Алиас не может быть пустым', 'error');
             return;
@@ -324,9 +324,9 @@ export const useFileManager = (showToast) => {
         });
 
         showToast('Алиас обновлен');
-    };
+    }, [loadedFiles, showToast]);
 
-    const removeFile = (fileId) => {
+    const removeFile = useCallback((fileId) => {
         if (window.confirm('Удалить этот файл из загруженных?')) {
             setLoadedFiles(prev => {
                 const newFiles = { ...prev };
@@ -335,9 +335,9 @@ export const useFileManager = (showToast) => {
             });
             showToast('Файл удален');
         }
-    };
+    }, [showToast]);
 
-    const showFileDebugInfo = (fileId) => {
+    const showFileDebugInfo = useCallback((fileId) => {
         const fileInfo = loadedFiles[fileId];
         if (!fileInfo) return;
         
@@ -375,7 +375,7 @@ export const useFileManager = (showToast) => {
                 showToast('Не удалось скопировать в буфер обмена', 'error');
             });
         }
-    };
+    }, [loadedFiles, showToast]);
 
     return {
         loadedFiles,
