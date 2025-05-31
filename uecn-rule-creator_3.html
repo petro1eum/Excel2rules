@@ -1,0 +1,2653 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Конструктор правил исправления ошибок УЭЦН - Простой интерфейс</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #00d4ff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.3)); }
+            to { filter: drop-shadow(0 0 20px rgba(0, 255, 136, 0.5)); }
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #b0b0b0;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .main-layout {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+        }
+
+        .form-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .examples-panel {
+            width: 350px;
+            position: sticky;
+            top: 20px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #00d4ff, #00ff88, #ff0080, #00d4ff);
+            background-size: 400% 400%;
+            border-radius: 15px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
+            animation: gradientShift 3s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .card:hover::before {
+            opacity: 0.3;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(0, 212, 255, 0.15);
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: #00d4ff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(to bottom, #00d4ff, #00ff88);
+            border-radius: 2px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #b0b0b0;
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .label-hint {
+            font-size: 0.75rem;
+            color: #777;
+            font-weight: normal;
+            margin-left: 10px;
+            text-transform: none;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #00d4ff;
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .priority-input {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .priority-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #00d4ff;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            display: inline-block;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.2);
+            transition: .4s;
+            border-radius: 30px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background: linear-gradient(45deg, #00d4ff, #00ff88);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #00d4ff, #00ff88);
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #ff0080, #ff4560);
+            color: #fff;
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(45deg, #ff4560, #ff0080);
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #00ff88, #00d4ff);
+            color: #000;
+        }
+
+        .action-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .action-item input {
+            flex: 1;
+            padding: 8px 12px;
+        }
+
+        .remove-btn {
+            background: rgba(255, 0, 128, 0.2);
+            color: #ff4560;
+            border: 1px solid rgba(255, 0, 128, 0.4);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .remove-btn:hover {
+            background: rgba(255, 0, 128, 0.4);
+            transform: rotate(90deg);
+        }
+
+        .condition-builder {
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .condition-row {
+            display: grid;
+            grid-template-columns: 2fr 1.5fr 2fr auto;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .condition-logic {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 8px;
+        }
+
+        .duplicate-strategy {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .file-upload-area {
+            border: 2px dashed rgba(0, 212, 255, 0.5);
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        .file-upload-area:hover {
+            border-color: #00d4ff;
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        .file-upload-area.drag-over {
+            border-color: #00ff88;
+            background: rgba(0, 255, 136, 0.1);
+        }
+
+        .file-info {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .file-info.active {
+            display: block;
+        }
+
+        .files-list {
+            margin-top: 20px;
+        }
+
+        .file-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .file-item:hover {
+            background: rgba(0, 212, 255, 0.1);
+            border-color: rgba(0, 212, 255, 0.3);
+        }
+
+        .file-item-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+            margin-bottom: 10px;
+        }
+
+        .file-icon {
+            font-size: 1.5rem;
+        }
+
+        .file-name {
+            font-weight: 500;
+            color: #00d4ff;
+            font-size: 1.1rem;
+        }
+
+        .file-alias {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .file-alias input {
+            width: 150px;
+            padding: 6px 10px;
+            font-size: 0.9rem;
+        }
+
+        .fields-count {
+            color: #888;
+            font-size: 0.85rem;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .file-remove-btn {
+            background: rgba(255, 0, 128, 0.2);
+            color: #ff4560;
+            border: 1px solid rgba(255, 0, 128, 0.4);
+            border-radius: 6px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+
+        .file-remove-btn:hover {
+            background: rgba(255, 0, 128, 0.4);
+        }
+
+        .field-reference {
+            background: rgba(0, 212, 255, 0.2);
+            border: 1px solid rgba(0, 212, 255, 0.4);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: #00d4ff;
+            display: inline-block;
+        }
+
+        .fields-group {
+            margin-bottom: 20px;
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        .fields-group-title {
+            font-weight: 600;
+            color: #00d4ff;
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-all;
+            white-space: normal;
+            line-height: 1.3;
+            max-width: 100%;
+        }
+
+        .fields-group-title span {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-all;
+            white-space: normal;
+            max-width: 100%;
+        }
+
+        .field-full-reference {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 8px;
+            margin-left: 16px;
+            font-family: monospace;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+            line-height: 1.2;
+            max-width: calc(100% - 16px);
+        }
+
+        .example-card {
+            background: rgba(255, 136, 0, 0.1);
+            border: 1px solid rgba(255, 136, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .example-card:hover {
+            background: rgba(255, 136, 0, 0.2);
+            transform: translateX(-5px);
+        }
+
+        .example-title {
+            font-weight: 600;
+            color: #ff8800;
+            margin-bottom: 5px;
+        }
+
+        .example-description {
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+
+        .output-section {
+            margin-top: 30px;
+        }
+
+        .json-output {
+            background: rgba(0, 0, 0, 0.5);
+            color: #00ff88;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre;
+            line-height: 1.4;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: rgba(0, 255, 136, 0.9);
+            color: #000;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-weight: 500;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.success {
+            background: rgba(0, 255, 136, 0.9);
+        }
+
+        .toast.error {
+            background: rgba(255, 69, 96, 0.9);
+        }
+
+        .fields-panel {
+            position: fixed;
+            right: -350px;
+            top: 0;
+            width: 350px;
+            height: 100vh;
+            background: rgba(15, 15, 30, 0.98);
+            backdrop-filter: blur(10px);
+            border-left: 1px solid rgba(0, 212, 255, 0.3);
+            transition: right 0.3s ease;
+            z-index: 100;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .fields-panel.open {
+            right: 0;
+        }
+
+        .field-item-panel {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            cursor: grab;
+            transition: all 0.3s ease;
+            position: relative;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+        }
+
+        .field-item-panel:hover {
+            background: rgba(0, 212, 255, 0.1);
+            border-color: rgba(0, 212, 255, 0.3);
+            transform: translateX(-5px);
+            cursor: grab;
+        }
+
+        .field-item-panel:active {
+            cursor: grabbing;
+        }
+
+        .field-item-panel.dragging {
+            opacity: 0.5;
+            transform: rotate(5deg) scale(0.95);
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.5);
+            z-index: 1000;
+        }
+
+        .field-item-panel::before {
+            content: "⋮⋮";
+            position: absolute;
+            left: 4px;
+            top: 12px;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 0.8rem;
+            line-height: 0.5;
+        }
+
+        .field-item-panel:hover::before {
+            color: #00d4ff;
+        }
+
+        .field-name {
+            color: #00d4ff;
+            font-weight: 600;
+            margin-bottom: 5px;
+            margin-left: 16px;
+            font-size: 1rem;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-all;
+            white-space: normal;
+            line-height: 1.3;
+            max-width: calc(100% - 16px);
+        }
+
+        .field-description {
+            color: #888;
+            font-size: 0.85rem;
+            margin-left: 16px;
+            font-style: italic;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-all;
+            white-space: normal;
+            line-height: 1.2;
+            max-width: calc(100% - 16px);
+        }
+
+        .drop-zone {
+            position: relative;
+        }
+
+        .drop-zone.drag-over {
+            background: rgba(0, 255, 136, 0.1) !important;
+            border-color: #00ff88 !important;
+            box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.3) !important;
+        }
+
+        .drop-indicator {
+            position: absolute;
+            top: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #00ff88;
+            border-radius: 1px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: 10;
+        }
+
+        .drop-zone.drag-over .drop-indicator {
+            opacity: 1;
+        }
+
+        .drag-helper {
+            position: fixed;
+            background: linear-gradient(45deg, #00d4ff, #00ff88);
+            color: #000;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            pointer-events: none;
+            z-index: 10000;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            opacity: 0.9;
+            transform: translate(-50%, -50%);
+        }
+
+        .toggle-fields-btn {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: linear-gradient(45deg, #00d4ff, #00ff88);
+            color: #000;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+            z-index: 99;
+            box-shadow: 0 5px 15px rgba(0, 212, 255, 0.3);
+        }
+
+        .toggle-fields-btn:hover {
+            transform: translateY(-50%) scale(1.1);
+            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.5);
+        }
+
+        .help-text {
+            font-size: 0.85rem;
+            color: #888;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .autocomplete-dropdown {
+            position: absolute;
+            background: rgba(30, 30, 45, 0.98);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .autocomplete-item {
+            padding: 10px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        .autocomplete-item:hover {
+            background: rgba(0, 212, 255, 0.2);
+        }
+
+        .autocomplete-item strong {
+            color: #00d4ff;
+        }
+
+        .sheet-selection {
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            width: 100%;
+        }
+
+        .sheet-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+            width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        .sheet-item:hover {
+            background: rgba(0, 212, 255, 0.1);
+            border-color: rgba(0, 212, 255, 0.3);
+        }
+
+        .sheet-item.selected {
+            background: rgba(0, 255, 136, 0.1);
+            border-color: rgba(0, 255, 136, 0.3);
+        }
+
+        .sheet-main-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+            width: 100%;
+            min-width: 0;
+        }
+
+        .sheet-checkbox {
+            transform: scale(1.2);
+            flex-shrink: 0;
+            order: 3;
+            margin-left: auto;
+        }
+
+        .sheet-name {
+            font-weight: 500;
+            color: #e0e0e0;
+            font-size: 1rem;
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            order: 1;
+        }
+
+        .sheet-fields-count {
+            font-size: 0.85rem;
+            color: #888;
+            white-space: nowrap;
+            flex-shrink: 0;
+            min-width: fit-content;
+            order: 2;
+        }
+
+        .sheet-toggle-fields {
+            background: none;
+            border: none;
+            color: #00d4ff;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+            order: 0;
+            margin-right: 8px;
+        }
+
+        .sheet-toggle-fields:hover {
+            background: rgba(0, 212, 255, 0.2);
+            transform: scale(1.1);
+        }
+
+        .sheet-toggle-fields.expanded {
+            transform: rotate(90deg);
+        }
+
+        .sheet-alias-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: 32px;
+            width: calc(100% - 32px);
+            box-sizing: border-box;
+        }
+
+        .sheet-alias-row label {
+            font-size: 0.8rem;
+            color: #666;
+            margin: 0;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .sheet-alias-row input {
+            flex: 1;
+            min-width: 0;
+            max-width: 400px;
+            width: 100%;
+            padding: 4px 8px;
+            font-size: 0.85rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        .sheet-fields-preview {
+            margin-top: 10px;
+            padding: 8px 12px;
+            background: rgba(0, 212, 255, 0.05);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: #ccc;
+            display: none;
+        }
+
+        .sheet-fields-preview.show {
+            display: block;
+        }
+
+        .sheet-field-item {
+            display: inline-block;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 4px;
+            padding: 2px 6px;
+            margin: 2px;
+            font-size: 0.8rem;
+            color: #00d4ff;
+        }
+
+        .sheets-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-weight: 600;
+            color: #00d4ff;
+        }
+
+        .sheets-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-mini {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: #e0e0e0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-mini:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                flex-direction: column;
+            }
+            
+            .examples-panel {
+                width: 100%;
+                position: static;
+            }
+        }
+
+        /* Простой режим без анимаций */
+        body.simple-mode * {
+            animation: none !important;
+            transition: none !important;
+        }
+
+        /* Исключения для toast - они должны работать всегда */
+        body.simple-mode .toast {
+            transition: transform 0.3s ease !important;
+            animation: none !important;
+        }
+
+        body.simple-mode .toast.show {
+            transition: transform 0.3s ease !important;
+        }
+
+        body.simple-mode .card::before {
+            display: none !important;
+        }
+
+        body.simple-mode h1 {
+            background: #00d4ff !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            filter: none !important;
+        }
+
+        body.simple-mode .container {
+            animation: none !important;
+        }
+
+        body.simple-mode .btn::before {
+            display: none !important;
+        }
+
+        body.simple-mode .action-item {
+            animation: none !important;
+        }
+
+        body.simple-mode .toggle-fields-btn,
+        body.simple-mode .card,
+        body.simple-mode .file-item,
+        body.simple-mode .sheet-item,
+        body.simple-mode .field-item-panel,
+        body.simple-mode .example-card {
+            transition: none !important;
+            transform: none !important;
+        }
+
+        body.simple-mode .toggle-fields-btn:hover,
+        body.simple-mode .card:hover,
+        body.simple-mode .file-item:hover,
+        body.simple-mode .sheet-item:hover,
+        body.simple-mode .field-item-panel:hover,
+        body.simple-mode .example-card:hover,
+        body.simple-mode .sheet-toggle-fields:hover {
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        body.simple-mode .sheet-toggle-fields.expanded {
+            transform: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h1 style="margin: 0;">Конструктор правил исправления ошибок УЭЦН</h1>
+            <button class="btn btn-secondary" id="toggleEffectsBtn" onclick="toggleVisualEffects()" style="padding: 8px 16px; font-size: 0.9rem;">
+                🎨 Отключить эффекты
+            </button>
+        </div>
+        <p class="subtitle">Создавайте правила простым языком - система сама преобразует их в код</p>
+        
+        <!-- Загрузка Excel файлов -->
+        <div class="card" style="margin-bottom: 30px;">
+            <h2 class="section-title">📊 Загрузка данных</h2>
+            <div class="file-upload-area" id="uploadArea">
+                <input type="file" id="fileInput" accept=".xlsx,.xls" multiple style="display: none;">
+                <div style="font-size: 2.5rem; margin-bottom: 10px;">📁</div>
+                <p style="margin-bottom: 10px; font-weight: 500;">Перетащите Excel файлы сюда или нажмите для выбора</p>
+                <p style="font-size: 0.85rem; color: #666;">Можно загрузить несколько файлов (справочники, каталоги, основные данные)</p>
+                <p style="font-size: 0.85rem; color: #888; margin-top: 8px;">✨ Поддерживаются многостраничные файлы - вы сможете выбрать нужные листы</p>
+            </div>
+            
+            <div class="files-list" id="filesList" style="display: none;">
+                <h3 style="margin-bottom: 15px; color: #1976d2;">Загруженные файлы:</h3>
+                <div id="filesContainer"></div>
+                <p style="margin-top: 15px; font-size: 0.85rem; color: #666;">
+                    💡 Совет: используйте короткие имена (алиасы) для удобной работы с полями. 
+                    Например: <span class="field-reference">Каталог.Модель</span> или <span class="field-reference">Данные.Дата_прихода</span>
+                </p>
+                <p style="margin-top: 10px; font-size: 0.85rem; color: #666;">
+                    📋 Многостраничные файлы: для файлов с несколькими листами можно выбрать нужные листы и задать им отдельные алиасы. 
+                    Например: <span class="field-reference">Прайс_Основной.Цена</span> и <span class="field-reference">Прайс_Скидки.Процент</span>
+                </p>
+            </div>
+        </div>
+        
+        <div class="main-layout">
+            <div class="form-section">
+                <!-- Основная информация -->
+                <div class="card">
+                    <h2 class="section-title">📝 Основная информация</h2>
+                    
+                    <div class="form-group">
+                        <label>Название правила</label>
+                        <input type="text" id="ruleName" placeholder="Например: Исправление дат сборки">
+                        <p class="help-text">Дайте правилу понятное название, описывающее его суть</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Какую проблему решаем?</label>
+                        <textarea id="problem" placeholder="Опишите проблему простым языком..."></textarea>
+                        <p class="help-text">Например: "Дата сборки часто указана раньше даты прихода компонентов"</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Приоритет выполнения <span class="label-hint">(от 1 до 100)</span></label>
+                        <div class="priority-input">
+                            <input type="range" id="priority" min="1" max="100" value="50" oninput="updatePriorityValue()">
+                            <span class="priority-value" id="priorityValue">50</span>
+                        </div>
+                        <p class="help-text">1-30: критичные ошибки, 31-60: заполнение пропусков, 61-100: улучшение качества</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Правило активно?</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="enabled" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Подготовка данных -->
+                <div class="card">
+                    <h2 class="section-title">🔧 Подготовка данных</h2>
+                    <p style="margin-bottom: 15px; color: #666;">Что нужно сделать с данными перед проверкой?</p>
+                    
+                    <div id="dataPreparationList"></div>
+                    <button class="btn btn-secondary" onclick="addDataPreparation()">+ Добавить действие</button>
+                    
+                    <div style="margin-top: 15px;">
+                        <p style="font-size: 0.9rem; color: #777;">Примеры действий:</p>
+                        <ul style="font-size: 0.85rem; color: #666; margin-left: 20px; margin-top: 5px;">
+                            <li>Убрать лишние пробелы из номера ПЗД</li>
+                            <li>Привести названия к верхнему регистру</li>
+                            <li>Исправить кодировку в поле "Комментарий"</li>
+                            <li>Нормализовать формат дат</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Условия применения -->
+                <div class="card">
+                    <h2 class="section-title">❓ Когда применять правило</h2>
+                    
+                    <div class="form-group">
+                        <label>Режим проверки условий</label>
+                        <select id="conditionMode">
+                            <option value="all">Все условия должны выполняться</option>
+                            <option value="any">Любое из условий</option>
+                            <option value="complex">Сложная логика (опишу текстом)</option>
+                        </select>
+                    </div>
+                    
+                    <div id="complexLogicDescription" style="display: none;">
+                        <div class="form-group">
+                            <label>Опишите логику проверки</label>
+                            <textarea id="complexLogic" placeholder="Например: (условие1 И условие2) ИЛИ условие3"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="condition-builder">
+                        <p style="margin-bottom: 10px; font-weight: 500;">Условия:</p>
+                        <div style="background: rgba(0, 255, 136, 0.1); border: 1px solid rgba(0, 255, 136, 0.3); border-radius: 6px; padding: 10px; margin-bottom: 15px; font-size: 0.85rem; color: #00ff88;">
+                            <strong>💡 Совет:</strong> Перетаскивайте поля мышкой прямо в поля формы или кликайте для вставки в активное поле
+                        </div>
+                        <div id="conditionsList"></div>
+                        <button class="btn btn-secondary" onclick="addCondition()">+ Добавить условие</button>
+                        
+                        <div style="margin-top: 15px;">
+                            <p style="font-size: 0.9rem; color: #777;">Примеры условий с несколькими файлами:</p>
+                            <ul style="font-size: 0.85rem; color: #666; margin-left: 20px; margin-top: 5px;">
+                                <li><strong>Данные.Модель</strong> соответствует каталогу → <strong>Каталог.Модель</strong></li>
+                                <li><strong>Данные.Завод</strong> пустое И <strong>Данные.Модель</strong> есть в <strong>Каталог.Модель</strong></li>
+                                <li><strong>Данные.Цена</strong> не равно <strong>Прайс.Цена</strong> где <strong>Прайс.Артикул = Данные.Артикул</strong></li>
+                                <li><strong>Данные.Статус</strong> есть в <strong>Справочники_Статусы.Код</strong></li>
+                                <li><strong>Прайс_Основной.Цена</strong> больше <strong>Прайс_Скидки.Цена_со_скидкой</strong> (многостраничный файл)</li>
+                                <li><strong>Каталог_2024.Модель</strong> не равно <strong>Каталог_2023.Модель</strong> (сравнение листов разных годов)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Группировать проверку по полю <span class="label-hint">(необязательно)</span></label>
+                        <input type="text" id="groupBy" placeholder="Например: Номер ПЗД (можно перетащить поле)">
+                        <p class="help-text">Если нужно проверять условия отдельно для каждой группы записей</p>
+                    </div>
+                </div>
+                
+                <!-- Что делать -->
+                <div class="card">
+                    <h2 class="section-title">⚡ Что делать</h2>
+                    
+                    <div class="form-group">
+                        <label>Основное действие</label>
+                        <select id="mainAction" onchange="updateActionDetails()">
+                            <option value="fill">Заполнить пустые значения</option>
+                            <option value="replace">Заменить значения</option>
+                            <option value="calculate">Вычислить из других полей</option>
+                            <option value="normalize">Нормализовать формат</option>
+                            <option value="merge_duplicates">Объединить дубликаты</option>
+                            <option value="mark_error">Пометить как ошибку</option>
+                            <option value="delete">Удалить записи</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Подробности <span class="label-hint">(опишите простым языком)</span></label>
+                        <textarea id="actionDetails" placeholder="Что именно нужно сделать... (можно использовать названия полей)"></textarea>
+                    </div>
+                    
+                    <div id="actionSpecificFields"></div>
+                    
+                    <div class="form-group">
+                        <label>Что делать при конфликтах?</label>
+                        <input type="text" id="handleConflicts" placeholder="Например: выбрать более позднюю дату (можно указать поля)">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Что делать при ошибках?</label>
+                        <select id="handleErrors">
+                            <option value="skip">Пропустить запись</option>
+                            <option value="mark">Пометить для ручной проверки</option>
+                            <option value="default">Использовать значение по умолчанию</option>
+                            <option value="stop">Остановить выполнение</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Обработка дубликатов -->
+                <div class="card" id="duplicateHandlingCard" style="display: none;">
+                    <h2 class="section-title">👥 Обработка дубликатов</h2>
+                    
+                    <div class="form-group">
+                        <label>По каким полям искать дубликаты?</label>
+                        <input type="text" id="duplicateKeys" placeholder="Файл.Поле1, Файл.Поле2, ... (можно перетащить из панели)">
+                        <p class="help-text">Например: "Данные.Номер_ПЗД" или "Данные.Паспорт_ГЗ, Данные.Паспорт_ПЭД"</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Стратегия обработки</label>
+                        <select id="duplicateStrategy" onchange="updateDuplicateFields()">
+                            <option value="keep_first">Оставить первую запись</option>
+                            <option value="keep_last">Оставить последнюю запись</option>
+                            <option value="keep_most_complete">Оставить самую полную</option>
+                            <option value="merge">Объединить данные</option>
+                        </select>
+                    </div>
+                    
+                    <div id="mergeStrategyFields" style="display: none;">
+                        <p style="margin: 15px 0 10px; font-weight: 500;">Как объединять поля:</p>
+                        <div id="mergeFieldsList"></div>
+                        <button class="btn btn-secondary" onclick="addMergeField()">+ Добавить поле</button>
+                    </div>
+                </div>
+                
+                <!-- Проверка после применения -->
+                <div class="card">
+                    <h2 class="section-title">✅ Проверка результата</h2>
+                    
+                    <div class="form-group">
+                        <label>Что проверить после применения правила?</label>
+                        <div id="validationChecksList"></div>
+                        <button class="btn btn-secondary" onclick="addValidationCheck()">+ Добавить проверку</button>
+                    </div>                    
+                    <div class="form-group">
+                        <label>Если проверка не прошла:</label>
+                        <select id="validationFailAction">
+                            <option value="rollback">Откатить изменения</option>
+                            <option value="mark_error">Пометить ошибкой</option>
+                            <option value="manual_review">Запросить ручную проверку</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Зависимости -->
+                <div class="card">
+                    <h2 class="section-title">🔗 Связи с другими правилами</h2>
+                    
+                    <div class="form-group">
+                        <label>Какие правила должны выполниться до этого? <span class="label-hint">(ID правил)</span></label>
+                        <input type="text" id="requiresRules" placeholder="RULE001, RULE002">
+                        <p class="help-text">Это правило будет ждать завершения указанных правил</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>С какими правилами нельзя выполнять одновременно?</label>
+                        <input type="text" id="blocksRules" placeholder="RULE003, RULE004">
+                        <p class="help-text">Эти правила не будут запускаться параллельно</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Панель примеров -->
+            <div class="examples-panel">
+                <div class="card">
+                    <h2 class="section-title">💡 Примеры правил</h2>
+                    
+                    <div class="example-card" onclick="loadExample('duplicates')">
+                        <div class="example-title">Объединение дубликатов с учетом каталога</div>
+                        <div class="example-description">Находит записи с одинаковым ПЗД и дополняет данными из каталога</div>
+                    </div>
+                    
+                    <div class="example-card" onclick="loadExample('manufacturer')">
+                        <div class="example-title">Умное заполнение завода-изготовителя</div>
+                        <div class="example-description">Берет недостающие данные из файла-справочника по ключевому полю</div>
+                    </div>
+                    
+                    <div class="example-card" onclick="loadExample('dates')">
+                        <div class="example-title">Исправление последовательности дат</div>
+                        <div class="example-description">Сверяет даты с нормативными сроками из отдельного файла</div>
+                    </div>
+                    
+                    <div class="example-card" onclick="loadExample('normalization')">
+                        <div class="example-title">Нормализация названий производителей</div>
+                        <div class="example-description">Исправляет написание согласно эталонному справочнику</div>
+                    </div>
+                    
+                    <div class="example-card" onclick="loadExample('multisheet')">
+                        <div class="example-title">Сверка цен между листами прайса</div>
+                        <div class="example-description">Работа с многостраничными файлами - сравнение цен между листами</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Результат -->
+        <div class="output-section">
+            <div class="card">
+                <h2 class="section-title">📄 Сгенерированное правило</h2>
+                <pre class="json-output" id="jsonOutput">{}</pre>
+            </div>
+        </div>
+        
+        <div class="action-buttons">
+            <button class="btn btn-primary" onclick="generateRule()">🚀 Создать правило</button>
+            <button class="btn btn-secondary" onclick="copyToClipboard()">📋 Копировать JSON</button>
+            <button class="btn btn-secondary" onclick="downloadRule()">💾 Сохранить файл</button>
+            <button class="btn btn-success" onclick="testRule()">🧪 Тестовый запуск</button>
+            <button class="btn btn-danger" onclick="resetForm()">🗑️ Очистить форму</button>
+        </div>
+    </div>
+    
+    <div class="toast" id="toast"></div>
+    
+    <!-- Кнопка для панели полей -->
+    <button class="toggle-fields-btn" id="toggleFieldsBtn" title="Показать доступные поля">📋</button>
+    
+    <!-- Панель с полями -->
+    <div class="fields-panel" id="fieldsPanel">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0;">Доступные поля</h3>
+            <button class="btn btn-secondary" style="padding: 8px 16px;" onclick="closeFieldsPanel()">✕</button>
+        </div>
+        <div style="background: rgba(0, 255, 136, 0.1); border: 1px solid rgba(0, 255, 136, 0.3); border-radius: 6px; padding: 10px; margin-bottom: 15px; font-size: 0.85rem; color: #00ff88;">
+            <strong>💡 Совет:</strong> Перетаскивайте поля мышкой прямо в поля формы или кликайте для вставки в активное поле
+        </div>
+        <div id="fieldsPanelContent">
+            <p style="color: #666; text-align: center; margin-top: 50px;">Загрузите Excel файл для просмотра доступных полей</p>
+        </div>
+    </div>
+    
+    <script>
+        let loadedFiles = {};
+        let availableFields = [];
+        let fieldDescriptions = {};
+        let ruleCounter = 1;
+        
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            const toggleFieldsBtn = document.getElementById('toggleFieldsBtn');
+            const fieldsPanel = document.getElementById('fieldsPanel');
+            const conditionMode = document.getElementById('conditionMode');
+            
+            // Инициализация состояния визуальных эффектов
+            initializeVisualEffects();
+            
+            // Обработка загрузки файлов
+            uploadArea.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', handleFileSelect);
+            
+            // Drag and Drop
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('drag-over');
+            });
+            
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('drag-over');
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('drag-over');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleMultipleFiles(files);
+                }
+            });
+            
+            // Панель полей
+            toggleFieldsBtn.addEventListener('click', () => {
+                fieldsPanel.classList.toggle('open');
+            });
+            
+            // Режим условий
+            conditionMode.addEventListener('change', function() {
+                document.getElementById('complexLogicDescription').style.display = 
+                    this.value === 'complex' ? 'block' : 'none';
+            });
+            
+            // Инициализация формы
+            addCondition();
+            addDataPreparation();
+            addValidationCheck();
+            
+            // Настройка drag & drop для существующих полей
+            setupAllDropZones();
+            
+            // Добавляем автодополнение для статических полей с задержкой
+            setTimeout(() => {
+                setupAutocomplete(document.getElementById('groupBy'));
+                setupAutocomplete(document.getElementById('duplicateKeys'));
+            }, 500);
+        });
+        
+        function setupAllDropZones() {
+            // Настраиваем все существующие input и textarea как drop zones
+            document.querySelectorAll('input[type="text"], textarea').forEach(input => {
+                setupDropZone(input);
+            });
+            
+            // Наблюдаем за добавлением новых элементов
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    mutation.addedNodes.forEach(function(node) {
+                        if (node.nodeType === Node.ELEMENT_NODE) {
+                            // Настраиваем новые поля как drop zones
+                            const newInputs = node.querySelectorAll('input[type="text"], textarea');
+                            newInputs.forEach(input => setupDropZone(input));
+                            
+                            // Если сам элемент является полем ввода
+                            if (node.matches && node.matches('input[type="text"], textarea')) {
+                                setupDropZone(node);
+                            }
+                        }
+                    });
+                });
+            });
+            
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+        }
+        
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            if (files.length > 0) {
+                handleMultipleFiles(files);
+            }
+        }
+        
+        function handleMultipleFiles(files) {
+            Array.from(files).forEach(file => {
+                handleFile(file);
+            });
+        }
+        
+        function generateFileAlias(fileName) {
+            // Генерируем короткий алиас из имени файла
+            const nameWithoutExt = fileName.replace(/\.[^/.]+$/, "");
+            const cleaned = nameWithoutExt
+                .replace(/[^а-яА-Яa-zA-Z0-9]/g, '_')
+                .replace(/_+/g, '_')
+                .replace(/^_|_$/g, '');
+            
+            // Если алиас уже существует, добавляем число
+            let alias = cleaned;
+            let counter = 2;
+            while (Object.values(loadedFiles).some(f => f.alias === alias)) {
+                alias = cleaned + counter;
+                counter++;
+            }
+            
+            return alias;
+        }
+        
+        function handleFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    const fileId = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    const alias = generateFileAlias(file.name);
+                    
+                    // Обрабатываем все листы
+                    const sheets = {};
+                    let totalFields = 0;
+                    
+                    workbook.SheetNames.forEach((sheetName, index) => {
+                        const sheet = workbook.Sheets[sheetName];
+                        const sheetAlias = workbook.SheetNames.length > 1 ? 
+                            `${alias}_${sheetName.replace(/[^а-яА-Яa-zA-Z0-9]/g, '_')}` : alias;
+                        
+                        const fields = extractHeadersForSheet(sheet);
+                        
+                        sheets[sheetName] = {
+                            name: sheetName,
+                            alias: sheetAlias,
+                            fields: fields.fieldNames,
+                            descriptions: fields.descriptions,
+                            fieldsCount: fields.fieldNames.length,
+                            selected: index === 0, // По умолчанию выбираем первый лист
+                            originalIndex: index
+                        };
+                        
+                        totalFields += fields.fieldNames.length;
+                    });
+                    
+                    loadedFiles[fileId] = {
+                        id: fileId,
+                        name: file.name,
+                        alias: alias,
+                        sheets: sheets,
+                        totalFields: totalFields,
+                        hasMultipleSheets: workbook.SheetNames.length > 1
+                    };
+                    
+                    updateFilesDisplay();
+                    updateGlobalFields();
+                    updateFieldsPanel();
+                    
+                    const sheetText = workbook.SheetNames.length > 1 ? 
+                        `${workbook.SheetNames.length} листов, ${totalFields} полей` : 
+                        `${totalFields} полей`;
+                    
+                    // Показываем детали для первого листа
+                    const firstSheetName = Object.keys(sheets)[0];
+                    const firstSheet = sheets[firstSheetName];
+                    const sampleFields = firstSheet.fields.slice(0, 3).join(', ');
+                    const detailText = firstSheet.fields.length > 3 ? 
+                        `Поля: ${sampleFields}...` : 
+                        `Поля: ${sampleFields}`;
+                    
+                    showToast(`Файл "${file.name}" загружен (${sheetText}). ${detailText}`, 'success');
+                } catch (error) {
+                    showToast('Ошибка при чтении файла: ' + error.message, 'error');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+        
+        function extractHeadersForSheet(sheet) {
+            const fieldNames = [];
+            const descriptions = {};
+            
+            if (!sheet['!ref']) {
+                return { fieldNames, descriptions };
+            }
+            
+            const range = XLSX.utils.decode_range(sheet['!ref']);
+            let headerRow = [];
+            let dataRow = [];
+            let headerRowIndex = -1;
+            let dataRowIndex = -1;
+            
+            // Проверяем строки для поиска заголовков
+            for (let row = range.s.r; row <= Math.min(range.s.r + 10, range.e.r); row++) {
+                const rowData = [];
+                let nonEmptyCount = 0;
+                
+                for (let col = range.s.c; col <= range.e.c; col++) {
+                    const cell = sheet[XLSX.utils.encode_cell({r: row, c: col})];
+                    let value = '';
+                    
+                    if (cell && cell.v !== undefined && cell.v !== null) {
+                        value = String(cell.v).trim();
+                        if (value !== '') {
+                            nonEmptyCount++;
+                        }
+                    }
+                    
+                    rowData.push({col, value});
+                }
+                
+                // Строка считается валидной, если в ней есть хотя бы 2 непустые ячейки
+                if (nonEmptyCount >= 2) {
+                    if (headerRowIndex === -1) {
+                        // Первая валидная строка - заголовки
+                        headerRowIndex = row;
+                        headerRow = rowData;
+                        console.log('Found header row at index:', row, 'with data:', rowData.map(r => r.value).filter(v => v));
+                    } else if (dataRowIndex === -1) {
+                        // Вторая валидная строка - примеры данных
+                        dataRowIndex = row;
+                        dataRow = rowData;
+                        console.log('Found data row at index:', row, 'with data:', rowData.map(r => r.value).filter(v => v));
+                        break;
+                    }
+                }
+            }
+            
+            if (headerRowIndex === -1 || headerRow.length === 0) {
+                console.log('No valid header row found');
+                return { fieldNames, descriptions };
+            }
+            
+            // Обрабатываем заголовки
+            headerRow.forEach((headerCell, index) => {
+                const fieldName = headerCell.value;
+                if (fieldName && fieldName.trim() !== '') {
+                    fieldNames.push(fieldName);
+                    
+                    // Создаем описание с примером данных
+                    let description = fieldName;
+                    if (dataRowIndex !== -1 && dataRow[index] && dataRow[index].value) {
+                        const sampleValue = dataRow[index].value;
+                        if (sampleValue && sampleValue !== fieldName) {
+                            // Ограничиваем длину примера
+                            const trimmedSample = sampleValue.length > 40 ? 
+                                sampleValue.substring(0, 37) + '...' : sampleValue;
+                            description = `Пример: ${trimmedSample}`;
+                        }
+                    }
+                    
+                    descriptions[fieldName] = description;
+                }
+            });
+            
+            console.log('Final extracted fields:', fieldNames);
+            console.log('Descriptions:', descriptions);
+            
+            return { fieldNames, descriptions };
+        }
+        
+        function updateFilesDisplay() {
+            const filesList = document.getElementById('filesList');
+            const filesContainer = document.getElementById('filesContainer');
+            
+            if (Object.keys(loadedFiles).length === 0) {
+                filesList.style.display = 'none';
+                return;
+            }
+            
+            filesList.style.display = 'block';
+            filesContainer.innerHTML = Object.entries(loadedFiles).map(([fileId, fileInfo]) => {
+                const selectedSheets = Object.values(fileInfo.sheets).filter(sheet => sheet.selected);
+                const selectedCount = selectedSheets.length;
+                const totalSheets = Object.keys(fileInfo.sheets).length;
+                
+                return `
+                    <div class="file-item">
+                        <div class="file-item-info">
+                            <span class="file-icon">📄</span>
+                            <div style="flex: 1;">
+                                <div class="file-name">${fileInfo.name}</div>
+                                <div class="fields-count">
+                                    ${fileInfo.hasMultipleSheets ? 
+                                        `${totalSheets} листов, выбрано: ${selectedCount}` : 
+                                        `${fileInfo.totalFields} полей`}
+                                </div>
+                            </div>
+                            <div class="file-alias">
+                                <label style="font-size: 0.9rem; color: #666;">Алиас:</label>
+                                <input type="text" value="${fileInfo.alias}" 
+                                       onchange="updateFileAlias('${fileId}', this.value)"
+                                       placeholder="Короткое имя">
+                            </div>
+                        </div>
+                        <div class="file-actions">
+                            <button class="btn-mini" onclick="showFileDebugInfo('${fileId}')" title="Показать структуру файла">🔍</button>
+                            <button class="file-remove-btn" onclick="removeFile('${fileId}')">Удалить</button>
+                        </div>
+                        
+                        <div class="sheet-selection">
+                            ${fileInfo.hasMultipleSheets ? `
+                                <div class="sheets-header">
+                                    <span>📋 Листы файла:</span>
+                                    <div class="sheets-actions">
+                                        <button class="btn-mini" onclick="selectAllSheets('${fileId}')">Выбрать все</button>
+                                        <button class="btn-mini" onclick="selectNoSheets('${fileId}')">Снять все</button>
+                                    </div>
+                                </div>
+                            ` : `
+                                <div class="sheets-header">
+                                    <span>📋 Лист файла:</span>
+                                </div>
+                            `}
+                            ${Object.entries(fileInfo.sheets).map(([sheetName, sheetInfo]) => `
+                                <div class="sheet-item ${sheetInfo.selected ? 'selected' : ''}">
+                                    <div class="sheet-main-row">
+                                        <button class="sheet-toggle-fields" 
+                                                onclick="toggleSheetFields('${fileId}', '${sheetName}')"
+                                                title="Показать/скрыть поля">▶</button>
+                                        <div class="sheet-name" title="${sheetName}">${sheetName}</div>
+                                        <div class="sheet-fields-count">${sheetInfo.fieldsCount} полей</div>
+                                        <input type="checkbox" 
+                                               class="sheet-checkbox" 
+                                               ${sheetInfo.selected ? 'checked' : ''}
+                                               onchange="toggleSheet('${fileId}', '${sheetName}', this.checked)">
+                                    </div>
+                                    <div class="sheet-fields-preview" id="fields_${fileId}_${sheetName.replace(/[^a-zA-Z0-9]/g, '_')}">
+                                        ${sheetInfo.fields.slice(0, 5).map(field => 
+                                            `<span class="sheet-field-item">${field}</span>`
+                                        ).join('')}
+                                        ${sheetInfo.fields.length > 5 ? 
+                                            `<span style="color: #888; font-style: italic;">...и еще ${sheetInfo.fields.length - 5} полей</span>` : 
+                                            ''}
+                                    </div>
+                                    <div class="sheet-alias-row">
+                                        <label>Алиас:</label>
+                                        <input type="text" value="${sheetInfo.alias}" 
+                                               onchange="updateSheetAlias('${fileId}', '${sheetName}', this.value)"
+                                               placeholder="Имя листа"
+                                               ${!sheetInfo.selected ? 'disabled' : ''}>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function toggleSheet(fileId, sheetName, selected) {
+            if (loadedFiles[fileId] && loadedFiles[fileId].sheets[sheetName]) {
+                loadedFiles[fileId].sheets[sheetName].selected = selected;
+                updateFilesDisplay();
+                updateGlobalFields();
+                updateFieldsPanel();
+                
+                const action = selected ? 'добавлен' : 'исключен';
+                showToast(`Лист "${sheetName}" ${action}`);
+            }
+        }
+        
+        function selectAllSheets(fileId) {
+            if (loadedFiles[fileId]) {
+                Object.values(loadedFiles[fileId].sheets).forEach(sheet => {
+                    sheet.selected = true;
+                });
+                updateFilesDisplay();
+                updateGlobalFields();
+                updateFieldsPanel();
+                showToast('Все листы выбраны');
+            }
+        }
+        
+        function selectNoSheets(fileId) {
+            if (loadedFiles[fileId]) {
+                Object.values(loadedFiles[fileId].sheets).forEach(sheet => {
+                    sheet.selected = false;
+                });
+                updateFilesDisplay();
+                updateGlobalFields();
+                updateFieldsPanel();
+                showToast('Все листы исключены');
+            }
+        }
+        
+        function updateSheetAlias(fileId, sheetName, newAlias) {
+            if (!newAlias.trim()) {
+                showToast('Алиас листа не может быть пустым', 'error');
+                updateFilesDisplay();
+                return;
+            }
+            
+            // Проверяем уникальность алиаса среди всех листов всех файлов
+            let isDuplicate = false;
+            Object.values(loadedFiles).forEach(fileInfo => {
+                Object.values(fileInfo.sheets).forEach(sheet => {
+                    if (sheet.alias === newAlias.trim() && 
+                        !(fileInfo.id === fileId && sheet.name === sheetName)) {
+                        isDuplicate = true;
+                    }
+                });
+            });
+            
+            if (isDuplicate) {
+                showToast('Такой алиас уже используется', 'error');
+                updateFilesDisplay();
+                return;
+            }
+            
+            loadedFiles[fileId].sheets[sheetName].alias = newAlias.trim();
+            updateGlobalFields();
+            updateFieldsPanel();
+            showToast('Алиас листа обновлен');
+        }
+        
+        function toggleSheetFields(fileId, sheetName) {
+            // Создаем безопасный ID, заменяя спецсимволы
+            const safeSheetName = sheetName.replace(/[^a-zA-Z0-9]/g, '_');
+            const fieldsPreview = document.getElementById(`fields_${fileId}_${safeSheetName}`);
+            
+            // Находим кнопку более надежным способом - по позиции в DOM
+            let toggleBtn = null;
+            if (fieldsPreview && fieldsPreview.parentElement) {
+                const sheetItem = fieldsPreview.parentElement;
+                toggleBtn = sheetItem.querySelector('.sheet-toggle-fields');
+            }
+            
+            if (!fieldsPreview) {
+                console.error('Не найден элемент fieldsPreview', {fileId, sheetName, safeSheetName});
+                return;
+            }
+            
+            if (!toggleBtn) {
+                console.error('Не найдена кнопка toggle', {fileId, sheetName});
+                return;
+            }
+            
+            if (fieldsPreview.classList.contains('show')) {
+                // Скрываем поля
+                fieldsPreview.classList.remove('show');
+                toggleBtn.innerHTML = '▶';
+                toggleBtn.classList.remove('expanded');
+                console.log('Поля скрыты для', sheetName);
+            } else {
+                // Показываем поля
+                fieldsPreview.classList.add('show');
+                toggleBtn.innerHTML = '▼';
+                toggleBtn.classList.add('expanded');
+                console.log('Поля показаны для', sheetName);
+            }
+        }
+        
+        function updateFileAlias(fileId, newAlias) {
+            if (!newAlias.trim()) {
+                showToast('Алиас не может быть пустым', 'error');
+                updateFilesDisplay();
+                return;
+            }
+            
+            // Проверяем уникальность среди основных алиасов файлов
+            const duplicate = Object.values(loadedFiles).find(f => 
+                f.id !== fileId && f.alias === newAlias.trim()
+            );
+            
+            if (duplicate) {
+                showToast('Такой алиас уже используется', 'error');
+                updateFilesDisplay();
+                return;
+            }
+            
+            const fileInfo = loadedFiles[fileId];
+            const oldAlias = fileInfo.alias;
+            fileInfo.alias = newAlias.trim();
+            
+            // Обновляем алиасы листов если файл многостраничный
+            if (fileInfo.hasMultipleSheets) {
+                Object.values(fileInfo.sheets).forEach(sheetInfo => {
+                    if (sheetInfo.alias.startsWith(oldAlias + '_')) {
+                        const sheetSuffix = sheetInfo.alias.substring(oldAlias.length);
+                        sheetInfo.alias = newAlias.trim() + sheetSuffix;
+                    }
+                });
+            } else {
+                // Для одностраничного файла обновляем алиас единственного листа
+                Object.values(fileInfo.sheets).forEach(sheetInfo => {
+                    if (sheetInfo.alias === oldAlias) {
+                        sheetInfo.alias = newAlias.trim();
+                    }
+                });
+            }
+            
+            updateFilesDisplay();
+            updateGlobalFields();
+            updateFieldsPanel();
+            showToast('Алиас обновлен');
+        }
+        
+        function removeFile(fileId) {
+            if (confirm('Удалить этот файл из загруженных?')) {
+                delete loadedFiles[fileId];
+                updateFilesDisplay();
+                updateGlobalFields();
+                updateFieldsPanel();
+                showToast('Файл удален');
+            }
+        }
+        
+        function showFileDebugInfo(fileId) {
+            const fileInfo = loadedFiles[fileId];
+            if (!fileInfo) return;
+            
+            let debugInfo = `📊 Структура файла: ${fileInfo.name}\n\n`;
+            
+            Object.entries(fileInfo.sheets).forEach(([sheetName, sheetInfo]) => {
+                debugInfo += `📋 Лист: ${sheetName}\n`;
+                debugInfo += `   Алиас: ${sheetInfo.alias}\n`;
+                debugInfo += `   Полей: ${sheetInfo.fieldsCount}\n`;
+                debugInfo += `   Выбран: ${sheetInfo.selected ? 'Да' : 'Нет'}\n`;
+                
+                if (sheetInfo.fields.length > 0) {
+                    debugInfo += `   Поля:\n`;
+                    sheetInfo.fields.slice(0, 10).forEach(field => {
+                        const desc = sheetInfo.descriptions[field];
+                        debugInfo += `     • ${field}`;
+                        if (desc && desc !== field) {
+                            debugInfo += ` (${desc})`;
+                        }
+                        debugInfo += `\n`;
+                    });
+                    
+                    if (sheetInfo.fields.length > 10) {
+                        debugInfo += `     ... и еще ${sheetInfo.fields.length - 10} полей\n`;
+                    }
+                }
+                debugInfo += `\n`;
+            });
+            
+            // Показываем в модальном окне или alert
+            if (confirm(debugInfo + '\nНажмите OK для копирования в буфер обмена или Cancel для закрытия')) {
+                navigator.clipboard.writeText(debugInfo).then(() => {
+                    showToast('Информация о структуре скопирована в буфер обмена', 'success');
+                }).catch(() => {
+                    showToast('Не удалось скопировать в буфер обмена', 'error');
+                });
+            }
+        }
+        
+        function updateGlobalFields() {
+            availableFields = [];
+            fieldDescriptions = {};
+            
+            Object.values(loadedFiles).forEach(fileInfo => {
+                Object.values(fileInfo.sheets).forEach(sheetInfo => {
+                    if (sheetInfo.selected) {
+                        sheetInfo.fields.forEach(field => {
+                            const fullReference = `${sheetInfo.alias}.${field}`;
+                            availableFields.push(fullReference);
+                            fieldDescriptions[fullReference] = {
+                                description: sheetInfo.descriptions[field],
+                                file: fileInfo.name,
+                                sheet: sheetInfo.name,
+                                alias: sheetInfo.alias,
+                                originalField: field
+                            };
+                        });
+                    }
+                });
+            });
+        }
+        
+        function updateFieldsPanel() {
+            const content = document.getElementById('fieldsPanelContent');
+            
+            if (Object.keys(loadedFiles).length === 0) {
+                content.innerHTML = '<p style="color: #666; text-align: center; margin-top: 50px;">Загрузите Excel файлы для просмотра доступных полей</p>';
+                return;
+            }
+            
+            let html = '';
+            Object.values(loadedFiles).forEach(fileInfo => {
+                const selectedSheets = Object.values(fileInfo.sheets).filter(sheet => sheet.selected);
+                
+                if (selectedSheets.length === 0) {
+                    return; // Пропускаем файлы без выбранных листов
+                }
+                
+                selectedSheets.forEach(sheetInfo => {
+                    const sheetTitle = fileInfo.hasMultipleSheets ? 
+                        `${sheetInfo.alias} (${sheetInfo.name})` : 
+                        sheetInfo.alias;
+                    
+                    html += `
+                        <div class="fields-group">
+                            <div class="fields-group-title">
+                                <span>📄</span>
+                                <span>${sheetTitle}</span>
+                                <span style="font-size: 0.85rem; color: #666;">(${fileInfo.name})</span>
+                            </div>
+                            ${sheetInfo.fields.map(field => {
+                                const fullRef = `${sheetInfo.alias}.${field}`;
+                                const desc = sheetInfo.descriptions[field];
+                                return `
+                                    <div class="field-item-panel" 
+                                         draggable="true"
+                                         data-field="${fullRef}" 
+                                         onclick="insertField('${fullRef}')"
+                                         ondragstart="handleFieldDragStart(event, '${fullRef}')"
+                                         ondragend="handleFieldDragEnd(event)">
+                                        <div class="field-name">${field}</div>
+                                        ${desc !== field ? `<div class="field-description">${desc}</div>` : ''}
+                                        <div class="field-full-reference">${fullRef}</div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    `;
+                });
+            });
+            
+            if (html === '') {
+                content.innerHTML = '<p style="color: #666; text-align: center; margin-top: 50px;">Выберите листы в загруженных файлах для просмотра полей</p>';
+            } else {
+                content.innerHTML = html;
+            }
+        }
+        
+        function insertField(fieldName) {
+            const activeElement = document.activeElement;
+            if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+                const start = activeElement.selectionStart;
+                const end = activeElement.selectionEnd;
+                const text = activeElement.value;
+                activeElement.value = text.substring(0, start) + fieldName + text.substring(end);
+                activeElement.focus();
+                activeElement.setSelectionRange(start + fieldName.length, start + fieldName.length);
+                showToast(`Поле "${fieldName}" вставлено`);
+            }
+        }
+        
+        // Drag & Drop функции
+        let draggedField = null;
+        let dragHelper = null;
+        
+        function handleFieldDragStart(event, fieldName) {
+            draggedField = fieldName;
+            event.target.classList.add('dragging');
+            
+            // Создаем helper элемент
+            dragHelper = document.createElement('div');
+            dragHelper.className = 'drag-helper';
+            dragHelper.textContent = fieldName;
+            document.body.appendChild(dragHelper);
+            
+            // Устанавливаем данные для передачи
+            event.dataTransfer.setData('text/plain', fieldName);
+            event.dataTransfer.effectAllowed = 'copy';
+            
+            // Скрываем стандартное изображение drag
+            const canvas = document.createElement('canvas');
+            canvas.width = canvas.height = 1;
+            const ctx = canvas.getContext('2d');
+            ctx.globalAlpha = 0;
+            event.dataTransfer.setDragImage(canvas, 0, 0);
+        }
+        
+        function handleFieldDragEnd(event) {
+            event.target.classList.remove('dragging');
+            if (dragHelper) {
+                document.body.removeChild(dragHelper);
+                dragHelper = null;
+            }
+            draggedField = null;
+            
+            // Убираем все drop-zone состояния
+            document.querySelectorAll('.drop-zone').forEach(zone => {
+                zone.classList.remove('drag-over');
+            });
+        }
+        
+        function setupDropZone(element) {
+            if (element.dataset.dropZoneSetup) return;
+            element.dataset.dropZoneSetup = 'true';
+            
+            element.classList.add('drop-zone');
+            
+            // Добавляем индикатор drop
+            if (!element.querySelector('.drop-indicator')) {
+                const indicator = document.createElement('div');
+                indicator.className = 'drop-indicator';
+                element.parentNode.style.position = 'relative';
+                element.parentNode.appendChild(indicator);
+            }
+            
+            element.addEventListener('dragover', function(event) {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = 'copy';
+                this.classList.add('drag-over');
+            });
+            
+            element.addEventListener('dragleave', function(event) {
+                // Проверяем, что мы действительно покинули элемент
+                if (!this.contains(event.relatedTarget)) {
+                    this.classList.remove('drag-over');
+                }
+            });
+            
+            element.addEventListener('drop', function(event) {
+                event.preventDefault();
+                this.classList.remove('drag-over');
+                
+                const fieldName = event.dataTransfer.getData('text/plain');
+                if (fieldName) {
+                    const start = this.selectionStart || 0;
+                    const end = this.selectionEnd || 0;
+                    const text = this.value || '';
+                    
+                    this.value = text.substring(0, start) + fieldName + text.substring(end);
+                    this.focus();
+                    this.setSelectionRange(start + fieldName.length, start + fieldName.length);
+                    
+                    showToast(`Поле "${fieldName}" добавлено`, 'success');
+                    
+                    // Триггерим change событие для автодополнения
+                    this.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            });
+        }
+        
+        // Обновляем позицию drag helper
+        document.addEventListener('dragover', function(event) {
+            if (dragHelper) {
+                dragHelper.style.left = event.clientX + 'px';
+                dragHelper.style.top = event.clientY + 'px';
+            }
+        });
+        
+        function setupAutocomplete(input) {
+            if (input.dataset.autocompleteSetup) return;
+            input.dataset.autocompleteSetup = 'true';
+            
+            let dropdown = input.nextElementSibling;
+            if (!dropdown || !dropdown.classList.contains('autocomplete-dropdown')) {
+                dropdown = document.createElement('div');
+                dropdown.className = 'autocomplete-dropdown';
+                dropdown.style.position = 'absolute';
+                dropdown.style.width = input.offsetWidth + 'px';
+                dropdown.style.display = 'none';
+                input.parentNode.style.position = 'relative';
+                input.parentNode.insertBefore(dropdown, input.nextSibling);
+            }
+            
+            input.addEventListener('input', function() {
+                const value = this.value.toLowerCase();
+                if (value.length === 0 || availableFields.length === 0) {
+                    dropdown.style.display = 'none';
+                    return;
+                }
+                
+                const lastDot = value.lastIndexOf('.');
+                const searchTerm = lastDot >= 0 ? value.substring(lastDot + 1) : value;
+                const prefix = lastDot >= 0 ? value.substring(0, lastDot + 1) : '';
+                
+                const matches = availableFields.filter(field => 
+                    field.toLowerCase().includes(searchTerm)
+                ).slice(0, 10);
+                
+                if (matches.length === 0) {
+                    dropdown.style.display = 'none';
+                    return;
+                }
+                
+                dropdown.innerHTML = matches.map(field => {
+                    const info = fieldDescriptions[field];
+                    return `
+                        <div class="autocomplete-item" onclick="selectAutocompleteItem(this, '${field}', '${input.id || input.className}')">
+                            <strong>${field}</strong>
+                            ${info && info.description !== info.originalField ? 
+                                ` - ${info.description}` : ''}
+                        </div>
+                    `;
+                }).join('');
+                
+                dropdown.style.display = 'block';
+            });
+            
+            document.addEventListener('click', function(e) {
+                if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.style.display = 'none';
+                }
+            });
+        }
+        
+        function selectAutocompleteItem(item, value, inputId) {
+            const input = inputId.includes('.') ? 
+                document.querySelector('.' + inputId.split(' ')[0]) : 
+                document.getElementById(inputId);
+            if (input) {
+                input.value = value;
+                input.focus();
+            }
+        }
+        
+        function closeFieldsPanel() {
+            document.getElementById('fieldsPanel').classList.remove('open');
+        }
+        
+        function updatePriorityValue() {
+            document.getElementById('priorityValue').textContent = document.getElementById('priority').value;
+        }
+        
+        function addDataPreparation() {
+            const container = document.getElementById('dataPreparationList');
+            const item = document.createElement('div');
+            item.className = 'action-item';
+            item.innerHTML = `
+                <input type="text" placeholder="Например: убрать пробелы из номера ПЗД" class="data-prep-action">
+                <button class="remove-btn" onclick="this.parentElement.remove()">×</button>
+            `;
+            container.appendChild(item);
+        }
+        
+        function addCondition() {
+            const container = document.getElementById('conditionsList');
+            const item = document.createElement('div');
+            item.className = 'condition-row';
+            item.innerHTML = `
+                <input type="text" placeholder="Поле (можно перетащить из панели)" class="condition-field">
+                <select class="condition-check">
+                    <option value="empty">пустое</option>
+                    <option value="not_empty">не пустое</option>
+                    <option value="equals">равно</option>
+                    <option value="not_equals">не равно</option>
+                    <option value="contains">содержит текст</option>
+                    <option value="similar_to">похоже на</option>
+                    <option value="in_list">в списке</option>
+                    <option value="duplicate">дубликат</option>
+                    <option value="before">раньше чем</option>
+                    <option value="after">позже чем</option>
+                </select>
+                <input type="text" placeholder="Значение (или поле)" class="condition-value">
+                <button class="remove-btn" onclick="this.parentElement.remove()">×</button>
+            `;
+            container.appendChild(item);
+        }
+        
+        function addValidationCheck() {
+            const container = document.getElementById('validationChecksList');
+            const item = document.createElement('div');
+            item.className = 'action-item';
+            item.innerHTML = `
+                <input type="text" placeholder="Например: Дата сборки должна быть позже даты прихода" class="validation-check">
+                <button class="remove-btn" onclick="this.parentElement.remove()">×</button>
+            `;
+            container.appendChild(item);
+        }
+        
+        function addMergeField() {
+            const container = document.getElementById('mergeFieldsList');
+            const item = document.createElement('div');
+            item.className = 'duplicate-strategy';
+            item.innerHTML = `
+                <input type="text" placeholder="Название поля (можно перетащить)" class="merge-field-name">
+                <select class="merge-strategy">
+                    <option value="min">взять минимальное</option>
+                    <option value="max">взять максимальное</option>
+                    <option value="first_not_empty">взять первое непустое</option>
+                    <option value="last_not_empty">взять последнее непустое</option>
+                    <option value="concatenate">объединить через запятую</option>
+                    <option value="sum">сумма значений</option>
+                    <option value="average">среднее значение</option>
+                </select>
+            `;
+            container.appendChild(item);
+        }
+        
+        function updateActionDetails() {
+            const action = document.getElementById('mainAction').value;
+            const duplicateCard = document.getElementById('duplicateHandlingCard');
+            
+            if (action === 'merge_duplicates') {
+                duplicateCard.style.display = 'block';
+            } else {
+                duplicateCard.style.display = 'none';
+            }
+            
+            // Подсказки для разных действий
+            const detailsField = document.getElementById('actionDetails');
+            const hints = {
+                'fill': 'Откуда взять значение? Например: из поля "Модель" или из справочника',
+                'replace': 'На что заменить? Например: заменить "н/д" на "НЕИЗВЕСТНО"',
+                'calculate': 'Как вычислить? Например: дата прихода + 7 дней',
+                'normalize': 'В какой формат привести? Например: ДД.ММ.ГГГГ для дат',
+                'merge_duplicates': 'Заполните настройки обработки дубликатов ниже',
+                'mark_error': 'Какое сообщение показать? Например: "Требуется ручная проверка"',
+                'delete': 'Подтвердите удаление записей, соответствующих условиям'
+            };
+            detailsField.placeholder = hints[action] || 'Опишите действие...';
+        }
+        
+        function updateDuplicateFields() {
+            const strategy = document.getElementById('duplicateStrategy').value;
+            document.getElementById('mergeStrategyFields').style.display = 
+                strategy === 'merge' ? 'block' : 'none';
+        }
+        
+        function generateRule() {
+            // Собираем информацию о загруженных файлах
+            const dataSourcesInfo = {
+                описание: "Информация об источниках данных для правила",
+                файлы: {},
+                алиасы_полей: {},
+                общая_статистика: {
+                    загружено_файлов: Object.keys(loadedFiles).length,
+                    выбрано_листов: 0,
+                    доступно_полей: availableFields.length
+                }
+            };
+            
+            // Собираем детальную информацию по каждому файлу
+            Object.values(loadedFiles).forEach(fileInfo => {
+                const selectedSheets = Object.values(fileInfo.sheets).filter(sheet => sheet.selected);
+                dataSourcesInfo.общая_статистика.выбрано_листов += selectedSheets.length;
+                
+                if (selectedSheets.length > 0) {
+                    dataSourcesInfo.файлы[fileInfo.name] = {
+                        основной_алиас: fileInfo.alias,
+                        многостраничный: fileInfo.hasMultipleSheets,
+                        листы: {}
+                    };
+                    
+                    selectedSheets.forEach(sheetInfo => {
+                        dataSourcesInfo.файлы[fileInfo.name].листы[sheetInfo.name] = {
+                            алиас: sheetInfo.alias,
+                            количество_полей: sheetInfo.fieldsCount,
+                            поля: sheetInfo.fields
+                        };
+                        
+                        // Создаем mapping алиасов полей
+                        sheetInfo.fields.forEach(field => {
+                            const fullReference = `${sheetInfo.alias}.${field}`;
+                            dataSourcesInfo.алиасы_полей[fullReference] = {
+                                исходный_файл: fileInfo.name,
+                                лист: sheetInfo.name,
+                                поле: field,
+                                описание: sheetInfo.descriptions[field] || field
+                            };
+                        });
+                    });
+                }
+            });
+            
+            // Собираем данные подготовки
+            const dataPreparation = [];
+            document.querySelectorAll('.data-prep-action').forEach(input => {
+                if (input.value) dataPreparation.push(input.value);
+            });
+            
+            // Собираем условия
+            const conditions = [];
+            document.querySelectorAll('.condition-row').forEach(row => {
+                const field = row.querySelector('.condition-field').value;
+                const check = row.querySelector('.condition-check').value;
+                const value = row.querySelector('.condition-value').value;
+                if (field) {
+                    conditions.push({ field, check, value, options: {} });
+                }
+            });
+            
+            // Собираем проверки
+            const validationChecks = [];
+            document.querySelectorAll('.validation-check').forEach(input => {
+                if (input.value) validationChecks.push(input.value);
+            });
+            
+            // Собираем стратегии объединения
+            const mergeStrategies = {};
+            document.querySelectorAll('.duplicate-strategy').forEach(row => {
+                const field = row.querySelector('.merge-field-name').value;
+                const strategy = row.querySelector('.merge-strategy').value;
+                if (field) {
+                    mergeStrategies[field] = strategy;
+                }
+            });
+            
+            const rule = {
+                rule_id: `RULE${String(ruleCounter++).padStart(3, '0')}`,
+                rule_name: document.getElementById('ruleName').value,
+                problem: document.getElementById('problem').value,
+                priority: parseInt(document.getElementById('priority').value),
+                enabled: document.getElementById('enabled').checked,
+                created_at: new Date().toISOString(),
+                
+                data_sources: dataSourcesInfo,
+                
+                data_preparation: {
+                    описание: "Подготовка данных перед проверкой",
+                    действия: dataPreparation
+                },
+                
+                when: {
+                    описание: "Условия применения правила",
+                    режим: document.getElementById('conditionMode').value === 'all' ? 'все условия' : 
+                           document.getElementById('conditionMode').value === 'any' ? 'любое условие' : 
+                           'сложная логика',
+                    conditions: conditions,
+                    group_by: document.getElementById('groupBy').value || null
+                },
+                
+                what_to_do: {
+                    action: document.getElementById('mainAction').value,
+                    details: document.getElementById('actionDetails').value,
+                    handle_conflicts: document.getElementById('handleConflicts').value || null,
+                    handle_errors: document.getElementById('handleErrors').value
+                },
+                
+                validation: {
+                    описание: "Проверка после применения",
+                    checks: validationChecks,
+                    on_fail: document.getElementById('validationFailAction').value
+                },
+                
+                dependencies: {
+                    описание: "Связи с другими правилами",
+                    requires: document.getElementById('requiresRules').value.split(',').map(s => s.trim()).filter(s => s),
+                    blocks: document.getElementById('blocksRules').value.split(',').map(s => s.trim()).filter(s => s)
+                }
+            };
+            
+            // Добавляем обработку дубликатов если нужно
+            if (document.getElementById('mainAction').value === 'merge_duplicates') {
+                rule.duplicate_handling = {
+                    описание: "Обработка дубликатов",
+                    ключевые_поля: document.getElementById('duplicateKeys').value.split(',').map(s => s.trim()),
+                    стратегия: document.getElementById('duplicateStrategy').value,
+                    при_объединении: mergeStrategies
+                };
+            }
+            
+            // Добавляем сложную логику если указана
+            if (document.getElementById('conditionMode').value === 'complex') {
+                rule.when.complex_logic = document.getElementById('complexLogic').value;
+            }
+            
+            document.getElementById('jsonOutput').textContent = JSON.stringify(rule, null, 2);
+            showToast('Правило успешно создано!', 'success');
+        }
+        
+        function loadExample(type) {
+            const examples = {
+                'duplicates': {
+                    ruleName: 'Обработка противоречивых дубликатов УЭЦН',
+                    problem: 'Один ПЗД с разными датами и данными',
+                    priority: 10,
+                    mainAction: 'merge_duplicates',
+                    actionDetails: 'Объединить все записи с одинаковым ПЗД в одну, выбирая наиболее подходящие значения',
+                    duplicateKeys: 'Номер ПЗД',
+                    duplicateStrategy: 'merge'
+                },
+                'manufacturer': {
+                    ruleName: 'Умное заполнение завода-изготовителя',
+                    problem: 'Завод не указан или указан неправильно',
+                    priority: 20,
+                    mainAction: 'fill',
+                    actionDetails: 'Попробовать определить завод: 1) по первым буквам паспорта, 2) по модели, 3) по истории поставок'
+                },
+                'dates': {
+                    ruleName: 'Исправление последовательности дат',
+                    problem: 'Даты процессов в неправильном порядке',
+                    priority: 5,
+                    mainAction: 'calculate',
+                    actionDetails: 'Восстановить правильную последовательность дат с стандартными интервалами'
+                },
+                'normalization': {
+                    ruleName: 'Нормализация названий производителей',
+                    problem: 'Разные написания одного и того же производителя',
+                    priority: 15,
+                    mainAction: 'normalize',
+                    actionDetails: 'Привести все варианты написания к стандартному из справочника'
+                },
+                'multisheet': {
+                    ruleName: 'Сверка цен между листами прайса',
+                    problem: 'Цены на основном листе не соответствуют ценам со скидками',
+                    priority: 25,
+                    mainAction: 'fill',
+                    actionDetails: 'Если Прайс_Основной.Цена больше Прайс_Скидки.Цена_со_скидкой, взять цену со скидками',
+                    conditionMode: 'complex',
+                    complexLogic: 'Прайс_Основной.Цена > Прайс_Скидки.Цена_со_скидкой И Прайс_Основной.Артикул = Прайс_Скидки.Артикул'
+                }
+            };
+            
+            const example = examples[type];
+            if (example) {
+                Object.keys(example).forEach(key => {
+                    const element = document.getElementById(key);
+                    if (element) {
+                        element.value = example[key];
+                        if (element.type === 'range') {
+                            updatePriorityValue();
+                        }
+                    }
+                });
+                
+                if (example.mainAction) {
+                    updateActionDetails();
+                }
+                
+                if (example.conditionMode) {
+                    document.getElementById('complexLogicDescription').style.display = 
+                        example.conditionMode === 'complex' ? 'block' : 'none';
+                }
+                
+                showToast('Пример загружен!');
+            }
+        }
+        
+        function copyToClipboard() {
+            const jsonText = document.getElementById('jsonOutput').textContent;
+            navigator.clipboard.writeText(jsonText).then(() => {
+                showToast('JSON скопирован в буфер обмена!', 'success');
+            });
+        }
+        
+        function downloadRule() {
+            const jsonText = document.getElementById('jsonOutput').textContent;
+            const blob = new Blob([jsonText], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `rule_${document.getElementById('ruleName').value || 'unnamed'}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Файл сохранен!', 'success');
+        }
+        
+        function testRule() {
+            showToast('Функция тестового запуска будет доступна после интеграции с системой', 'info');
+        }
+        
+        function resetForm() {
+            if (confirm('Вы уверены, что хотите очистить все поля?')) {
+                document.querySelectorAll('input[type="text"], textarea').forEach(el => {
+                    el.value = '';
+                });
+                document.querySelectorAll('select').forEach(el => {
+                    el.selectedIndex = 0;
+                });
+                document.getElementById('priority').value = 50;
+                updatePriorityValue();
+                document.getElementById('enabled').checked = true;
+                document.getElementById('jsonOutput').textContent = '{}';
+                
+                // Очищаем динамические списки
+                document.getElementById('dataPreparationList').innerHTML = '';
+                document.getElementById('conditionsList').innerHTML = '';
+                document.getElementById('validationChecksList').innerHTML = '';
+                document.getElementById('mergeFieldsList').innerHTML = '';
+                
+                // Добавляем по одному пустому элементу
+                addDataPreparation();
+                addCondition();
+                addValidationCheck();
+                
+                showToast('Форма очищена!');
+            }
+        }
+        
+        function toggleVisualEffects() {
+            const body = document.body;
+            const btn = document.getElementById('toggleEffectsBtn');
+            const isSimpleMode = body.classList.contains('simple-mode');
+            
+            if (isSimpleMode) {
+                // Включаем эффекты
+                body.classList.remove('simple-mode');
+                btn.innerHTML = '🎨 Отключить эффекты';
+                localStorage.setItem('simpleMode', 'false');
+                showToast('Визуальные эффекты включены', 'success');
+            } else {
+                // Отключаем эффекты
+                body.classList.add('simple-mode');
+                btn.innerHTML = '✨ Включить эффекты';
+                localStorage.setItem('simpleMode', 'true');
+                showToast('Визуальные эффекты отключены');
+            }
+        }
+        
+        function initializeVisualEffects() {
+            const simpleMode = localStorage.getItem('simpleMode') === 'true';
+            const btn = document.getElementById('toggleEffectsBtn');
+            
+            if (simpleMode) {
+                document.body.classList.add('simple-mode');
+                btn.innerHTML = '✨ Включить эффекты';
+            }
+        }
+        
+        let toastTimer = null;
+        
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            if (!toast) {
+                console.error('Toast элемент не найден');
+                return;
+            }
+            
+            console.log('showToast вызван:', {message, type, currentTimer: !!toastTimer});
+            
+            // Очищаем предыдущий таймер если он есть
+            if (toastTimer) {
+                clearTimeout(toastTimer);
+                toastTimer = null;
+                console.log('Предыдущий таймер очищен');
+            }
+            
+            // Сначала убираем показ если toast уже показан
+            toast.classList.remove('show');
+            
+            // Устанавливаем новое содержимое и класс
+            toast.textContent = message;
+            toast.className = `toast ${type}`;
+            
+            console.log('Toast настроен, классы:', toast.className);
+            
+            // Небольшая задержка чтобы CSS transition сработал корректно
+            requestAnimationFrame(() => {
+                toast.classList.add('show');
+                console.log('Toast показан, финальные классы:', toast.className);
+                
+                // Устанавливаем новый таймер
+                toastTimer = setTimeout(() => {
+                    if (toast) {
+                        console.log('Скрываем toast по таймеру');
+                        toast.classList.remove('show');
+                    }
+                    toastTimer = null;
+                }, 3000);
+                
+                console.log('Новый таймер установлен');
+            });
+        }
+    </script>
+</body>
+</html>
