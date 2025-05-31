@@ -66,9 +66,30 @@ h1 {
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 30px;
-    height: fit-content;
+    max-height: 80vh;
+    overflow-y: auto;
+    overflow-x: hidden;
     position: sticky;
     top: 20px;
+}
+
+/* Кастомный скроллбар для панели примеров */
+.examples-panel::-webkit-scrollbar {
+    width: 8px;
+}
+
+.examples-panel::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.examples-panel::-webkit-scrollbar-thumb {
+    background: rgba(0, 212, 255, 0.3);
+    border-radius: 4px;
+}
+
+.examples-panel::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 212, 255, 0.5);
 }
 
 .examples-panel h3 {
@@ -1110,4 +1131,429 @@ body.simple-mode .sheet-toggle-fields:hover {
 
 body.simple-mode .sheet-toggle-fields.expanded {
     transform: none !important;
+}
+
+/* Аккордеон стили */
+.accordion-section {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 16px;
+    transition: all 0.3s ease;
+}
+
+.accordion-section:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.accordion-header {
+    padding: 16px;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s;
+    background: transparent;
+}
+
+.accordion-header:hover {
+    background-color: rgba(0, 212, 255, 0.05);
+}
+
+.accordion-header h3 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #e0e0e0;
+    font-size: 1.1rem;
+}
+
+.accordion-toggle {
+    display: inline-block;
+    transition: transform 0.3s ease;
+    font-size: 12px;
+    color: #00d4ff;
+}
+
+.accordion-toggle.expanded {
+    transform: rotate(90deg);
+}
+
+.accordion-content {
+    padding: 0 16px 16px;
+    animation: slideDown 0.3s ease-out;
+}
+
+.accordion-content > p {
+    color: #888;
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Исторические данные стили */
+.historical-work {
+    padding: 16px 0;
+}
+
+.historical-header {
+    margin-bottom: 20px;
+}
+
+.stats-overview {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding: 12px;
+    background: rgba(0, 255, 136, 0.05);
+    border: 1px solid rgba(0, 255, 136, 0.2);
+    border-radius: 8px;
+}
+
+.stat-item {
+    color: #888;
+    font-size: 0.9rem;
+}
+
+.stat-item strong {
+    color: #00ff88;
+    font-size: 1.1rem;
+}
+
+.historical-controls {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.search-input, .filter-select, .sort-select {
+    flex: 1;
+    min-width: 150px;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: #fff;
+    font-size: 0.9rem;
+}
+
+.files-list-historical {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.file-transformation {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.file-transformation:hover {
+    border-color: rgba(0, 212, 255, 0.3);
+}
+
+.file-header {
+    padding: 16px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.file-main-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.file-name-historical {
+    font-weight: 500;
+    color: #e0e0e0;
+    font-size: 1rem;
+}
+
+.expand-icon {
+    color: #666;
+    transition: transform 0.3s ease;
+}
+
+.expand-icon.expanded {
+    transform: rotate(90deg);
+}
+
+.file-stats {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.stat-badge {
+    font-size: 1.2rem;
+}
+
+.complexity-badge {
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border: 1px solid;
+}
+
+.complexity-badge.green {
+    background: rgba(0, 255, 136, 0.1);
+    border-color: rgba(0, 255, 136, 0.3);
+    color: #00ff88;
+}
+
+.complexity-badge.yellow {
+    background: rgba(255, 200, 0, 0.1);
+    border-color: rgba(255, 200, 0, 0.3);
+    color: #ffc800;
+}
+
+.complexity-badge.red {
+    background: rgba(255, 69, 96, 0.1);
+    border-color: rgba(255, 69, 96, 0.3);
+    color: #ff4560;
+}
+
+.file-details {
+    padding: 0 16px 16px;
+    animation: slideDown 0.3s ease-out;
+}
+
+.transformation-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.info-section {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.info-section h4 {
+    margin: 0 0 8px 0;
+    font-size: 1rem;
+    color: #00d4ff;
+}
+
+.info-section p {
+    margin: 4px 0;
+    font-size: 0.9rem;
+    color: #ccc;
+}
+
+.changes-stats {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+.changes-stats .stat {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+.changes-stats .stat.added {
+    background: rgba(0, 255, 136, 0.1);
+    color: #00ff88;
+}
+
+.changes-stats .stat.removed {
+    background: rgba(255, 69, 96, 0.1);
+    color: #ff4560;
+}
+
+.changes-stats .stat.kept {
+    background: rgba(0, 212, 255, 0.1);
+    color: #00d4ff;
+}
+
+.formulas-list {
+    margin-top: 8px;
+}
+
+.formulas-list h5 {
+    margin: 0 0 4px 0;
+    font-size: 0.85rem;
+    color: #888;
+}
+
+.formula-tag {
+    display: inline-block;
+    background: rgba(255, 136, 0, 0.1);
+    border: 1px solid rgba(255, 136, 0, 0.3);
+    color: #ff8800;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    margin: 2px;
+}
+
+.transformation-steps {
+    margin-top: 20px;
+}
+
+.transformation-steps h4 {
+    margin: 0 0 12px 0;
+    color: #00d4ff;
+}
+
+.transformation-step {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    overflow: hidden;
+}
+
+.step-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.step-number {
+    background: rgba(0, 212, 255, 0.2);
+    color: #00d4ff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.step-action {
+    flex: 1;
+    font-weight: 500;
+    color: #e0e0e0;
+}
+
+.step-toggle {
+    color: #666;
+    transition: transform 0.2s ease;
+}
+
+.step-toggle.expanded {
+    transform: rotate(90deg);
+}
+
+.step-details {
+    padding: 0 12px 12px;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.step-description {
+    margin: 8px 0;
+    color: #ccc;
+    font-size: 0.9rem;
+}
+
+.columns-section {
+    margin: 12px 0;
+}
+
+.columns-section h5 {
+    margin: 0 0 8px 0;
+    font-size: 0.85rem;
+    color: #888;
+}
+
+.columns-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.column-tag {
+    background: rgba(0, 212, 255, 0.1);
+    border: 1px solid rgba(0, 212, 255, 0.2);
+    color: #00d4ff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+.column-tag.new {
+    background: rgba(0, 255, 136, 0.1);
+    border-color: rgba(0, 255, 136, 0.3);
+    color: #00ff88;
+}
+
+.problems-section {
+    margin: 12px 0;
+}
+
+.problems-section h5 {
+    margin: 0 0 8px 0;
+    font-size: 0.85rem;
+    color: #888;
+}
+
+.problems-section ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.problems-section li {
+    color: #ff8800;
+    font-size: 0.85rem;
+    margin: 4px 0;
+}
+
+.step-additional-details {
+    margin: 8px 0 0;
+    font-size: 0.85rem;
+    color: #888;
+    font-style: italic;
+}
+
+.file-actions-historical {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.loading-state, .no-data-state {
+    text-align: center;
+    padding: 40px;
+    color: #888;
+}
+
+.no-data-state p {
+    margin-bottom: 16px;
+}
+
+.no-files {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+    font-style: italic;
 } 
