@@ -148,17 +148,19 @@ function App() {
             <p className="subtitle">Создавайте правила простым языком - система сама преобразует их в код</p>
             
             {/* Загрузка Excel файлов */}
-            <FileUploader
-                loadedFiles={loadedFiles}
-                onFileUpload={handleMultipleFiles}
-                onUpdateFileAlias={updateFileAlias}
-                onRemoveFile={removeFile}
-                onShowDebugInfo={showFileDebugInfo}
-                onToggleSheet={toggleSheet}
-                onSelectAllSheets={selectAllSheets}
-                onSelectNoSheets={selectNoSheets}
-                onUpdateSheetAlias={updateSheetAlias}
-            />
+            <div className="file-upload-section">
+                <FileUploader
+                    loadedFiles={loadedFiles}
+                    onFileUpload={handleMultipleFiles}
+                    onUpdateFileAlias={updateFileAlias}
+                    onRemoveFile={removeFile}
+                    onShowDebugInfo={showFileDebugInfo}
+                    onToggleSheet={toggleSheet}
+                    onSelectAllSheets={selectAllSheets}
+                    onSelectNoSheets={selectNoSheets}
+                    onUpdateSheetAlias={updateSheetAlias}
+                />
+            </div>
             
             <div className="main-layout">
                 <div className="form-section">

@@ -46,6 +46,76 @@ const ExamplesPanel = ({ onLoadExample }) => {
         localStorage.setItem('historicalTransformations', JSON.stringify(newData));
     };
 
+    const handleLoadRules = (fileName, rules, fullData) => {
+        console.log('Loading rules from:', fileName);
+        console.log('Rules:', rules);
+        console.log('Full data:', fullData);
+        
+        // Преобразуем правила из исторических данных в формат для формы
+        const ruleData = {
+            ruleName: `Правило из ${fileName}`,
+            problem: fullData['🎯'] || 'Загружено из исторических данных',
+            priority: 85,
+            enabled: true,
+            conditionMode: 'all',
+            conditions: [],
+            mainAction: 'calculate',
+            actionDetails: '',
+            dataPreparation: [],
+            validationChecks: []
+        };
+        
+        // Извлекаем информацию о проблеме из шагов
+        const problemStep = fullData['🔄_ПОШАГОВАЯ_ТРАНСФОРМАЦИЯ']?.find(step => step.действие === 'АНАЛИЗ ПРОБЛЕМ');
+        if (problemStep && problemStep.найденные_проблемы) {
+            ruleData.problem = problemStep.найденные_проблемы.join('. ');
+        }
+        
+        // Извлекаем условия и действия из правил
+        if (rules.валидация && rules.валидация.length > 0) {
+            ruleData.validationChecks = rules.валидация.map(check => ({ check }));
+        }
+        
+        // Формируем описание действий из формул
+        const actionDescriptions = [];
+        if (Object.keys(rules.формулы).length > 0) {
+            Object.entries(rules.формулы).forEach(([field, formula]) => {
+                actionDescriptions.push(`${field}: ${formula}`);
+            });
+        }
+        if (Object.keys(rules.логика).length > 0) {
+            Object.entries(rules.логика).forEach(([field, logic]) => {
+                actionDescriptions.push(`Логика для ${field}: ${logic}`);
+            });
+        }
+        if (actionDescriptions.length > 0) {
+            ruleData.actionDetails = actionDescriptions.join('\n');
+        }
+        
+        // Определяем тип действия на основе данных
+        const changesAnalysis = fullData['⚙️_АНАЛИЗ_ИЗМЕНЕНИЙ'];
+        if (changesAnalysis?.добавленные_столбцы?.length > 0) {
+            if (changesAnalysis.добавленные_столбцы.some(col => col.includes('Новая') || col.includes('Верная'))) {
+                ruleData.mainAction = 'calculate';
+            } else if (changesAnalysis.добавленные_столбцы.some(col => col.includes('Если'))) {
+                ruleData.mainAction = 'fill';
+            }
+        }
+        
+        // Загружаем правило в форму
+        onLoadExample(ruleData);
+        
+        // Показываем уведомление
+        const toast = document.createElement('div');
+        toast.className = 'toast show success';
+        toast.textContent = `✅ Правила из "${fileName}" загружены в форму`;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    };
+
     const examples = [
         {
             title: "Несоответствие дат прихода и приходки",
@@ -296,6 +366,7 @@ const ExamplesPanel = ({ onLoadExample }) => {
                             <HistoricalWork 
                                 historicalData={historicalData}
                                 onUpdate={handleHistoricalDataUpdate}
+                                onLoadRules={handleLoadRules}
                             />
                         ) : (
                             <div className="no-data-state">

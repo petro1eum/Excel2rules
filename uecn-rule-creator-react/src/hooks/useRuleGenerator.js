@@ -33,9 +33,9 @@ export const useRuleGenerator = (loadedFiles, showToast) => {
     // Инициализация - добавляем по одному элементу каждого типа
     useEffect(() => {
         setDynamicItems({
-            dataPreparation: [{ id: Date.now() }],
-            conditions: [{ id: Date.now() + 1 }],
-            validationChecks: [{ id: Date.now() + 2 }],
+            dataPreparation: [{ id: `dp_${Date.now()}` }],
+            conditions: [{ id: `cond_${Date.now() + 1}` }],
+            validationChecks: [{ id: `val_${Date.now() + 2}` }],
             mergeFields: []
         });
     }, []);
@@ -48,9 +48,11 @@ export const useRuleGenerator = (loadedFiles, showToast) => {
     };
 
     const addDynamicItem = (type) => {
+        const newId = `${type}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        console.log(`Adding new ${type} item with ID: ${newId}`);
         setDynamicItems(prev => ({
             ...prev,
-            [type]: [...prev[type], { id: Date.now() }]
+            [type]: [...prev[type], { id: newId }]
         }));
     };
 
@@ -385,9 +387,9 @@ export const useRuleGenerator = (loadedFiles, showToast) => {
             });
 
             setDynamicItems({
-                dataPreparation: [{ id: Date.now() }],
-                conditions: [{ id: Date.now() + 1 }],
-                validationChecks: [{ id: Date.now() + 2 }],
+                dataPreparation: [{ id: `dp_${Date.now()}` }],
+                conditions: [{ id: `cond_${Date.now() + 1}` }],
+                validationChecks: [{ id: `val_${Date.now() + 2}` }],
                 mergeFields: []
             });
 

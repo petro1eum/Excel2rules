@@ -14,7 +14,7 @@ body {
 }
 
 .container {
-    max-width: 1200px;
+    max-width: 1600px;
     margin: 0 auto;
     animation: fadeIn 0.5s ease-out;
 }
@@ -57,16 +57,17 @@ h1 {
     display: flex;
     flex-direction: column;
     gap: 20px;
+    max-width: 800px;
 }
 
 .examples-panel {
-    width: 350px;
+    flex: 0 0 420px;
     background: rgba(0, 200, 255, 0.02);
     border: 1px solid rgba(0, 200, 255, 0.1);
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 30px;
-    max-height: 80vh;
+    max-height: 85vh;
     overflow-y: auto;
     overflow-x: hidden;
     position: sticky;
@@ -153,6 +154,10 @@ h1 {
 .card:hover {
     transform: translateY(-2px);
     box-shadow: 0 15px 40px rgba(0, 212, 255, 0.15);
+}
+
+.file-upload-section {
+    margin-bottom: 30px;
 }
 
 .section-title {
@@ -1058,14 +1063,34 @@ input:checked + .toggle-slider:before {
     background: rgba(255, 255, 255, 0.1);
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1200px) {
+    .container {
+        max-width: 100%;
+    }
+    
     .main-layout {
         flex-direction: column;
     }
     
+    .form-section {
+        max-width: 100%;
+    }
+    
     .examples-panel {
+        flex: 1;
         width: 100%;
         position: static;
+        max-height: none;
+    }
+}
+
+@media (min-width: 1600px) {
+    .container {
+        max-width: 1800px;
+    }
+    
+    .examples-panel {
+        flex: 0 0 500px;
     }
 }
 
@@ -1213,9 +1238,9 @@ body.simple-mode .sheet-toggle-fields.expanded {
 
 .stats-overview {
     display: flex;
-    gap: 20px;
+    gap: 15px;
     flex-wrap: wrap;
-    padding: 12px;
+    padding: 10px;
     background: rgba(0, 255, 136, 0.05);
     border: 1px solid rgba(0, 255, 136, 0.2);
     border-radius: 8px;
@@ -1223,42 +1248,42 @@ body.simple-mode .sheet-toggle-fields.expanded {
 
 .stat-item {
     color: #888;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .stat-item strong {
     color: #00ff88;
-    font-size: 1.1rem;
+    font-size: 1rem;
 }
 
 .historical-controls {
     display: flex;
-    gap: 12px;
+    gap: 10px;
     margin-bottom: 20px;
     flex-wrap: wrap;
 }
 
 .search-input, .filter-select, .sort-select {
     flex: 1;
-    min-width: 150px;
-    padding: 8px 12px;
+    min-width: 120px;
+    padding: 6px 10px;
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 6px;
     color: #fff;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .files-list-historical {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
 }
 
 .file-transformation {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
+    border-radius: 8px;
     overflow: hidden;
     transition: all 0.3s ease;
 }
@@ -1268,29 +1293,46 @@ body.simple-mode .sheet-toggle-fields.expanded {
 }
 
 .file-header {
-    padding: 16px;
+    padding: 12px;
     cursor: pointer;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 10px;
 }
 
 .file-main-info {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     flex: 1;
+    min-width: 0;
 }
 
 .file-name-historical {
     font-weight: 500;
     color: #e0e0e0;
-    font-size: 1rem;
+    font-size: 0.9rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+}
+
+.has-rules-badge {
+    background: rgba(255, 136, 0, 0.1);
+    border: 1px solid rgba(255, 136, 0, 0.3);
+    color: #ff8800;
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    margin-left: 4px;
 }
 
 .expand-icon {
     color: #666;
     transition: transform 0.3s ease;
+    flex-shrink: 0;
 }
 
 .expand-icon.expanded {
@@ -1299,20 +1341,22 @@ body.simple-mode .sheet-toggle-fields.expanded {
 
 .file-stats {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     align-items: center;
+    flex-shrink: 0;
 }
 
 .stat-badge {
-    font-size: 1.2rem;
+    font-size: 1rem;
 }
 
 .complexity-badge {
-    padding: 4px 12px;
-    border-radius: 16px;
-    font-size: 0.85rem;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
     font-weight: 500;
     border: 1px solid;
+    white-space: nowrap;
 }
 
 .complexity-badge.green {
@@ -1334,66 +1378,61 @@ body.simple-mode .sheet-toggle-fields.expanded {
 }
 
 .file-details {
-    padding: 0 16px 16px;
+    padding: 0 12px 12px;
     animation: slideDown 0.3s ease-out;
 }
 
 .transformation-info {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 16px;
-    margin-bottom: 20px;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
 }
 
 .info-section {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    padding: 12px;
+    border-radius: 6px;
+    padding: 10px;
+}
+
+.info-section.rules-section {
+    background: rgba(255, 136, 0, 0.05);
+    border-color: rgba(255, 136, 0, 0.2);
+    padding: 6px 8px;
+    overflow: visible;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .info-section h4 {
-    margin: 0 0 8px 0;
-    font-size: 1rem;
+    margin: 0 0 6px 0;
+    font-size: 0.9rem;
     color: #00d4ff;
 }
 
 .info-section p {
-    margin: 4px 0;
-    font-size: 0.9rem;
+    margin: 3px 0;
+    font-size: 0.85rem;
     color: #ccc;
 }
 
 .changes-stats {
     display: flex;
-    gap: 12px;
+    gap: 8px;
     flex-wrap: wrap;
-    margin-top: 8px;
+    margin-top: 6px;
 }
 
 .changes-stats .stat {
-    padding: 4px 8px;
+    padding: 2px 6px;
     border-radius: 4px;
-    font-size: 0.85rem;
-}
-
-.changes-stats .stat.added {
-    background: rgba(0, 255, 136, 0.1);
-    color: #00ff88;
-}
-
-.changes-stats .stat.removed {
-    background: rgba(255, 69, 96, 0.1);
-    color: #ff4560;
-}
-
-.changes-stats .stat.kept {
-    background: rgba(0, 212, 255, 0.1);
-    color: #00d4ff;
+    font-size: 0.75rem;
 }
 
 .formulas-list {
-    margin-top: 8px;
+    margin-top: 4px;
+    overflow: visible;
 }
 
 .formulas-list h5 {
@@ -1413,28 +1452,38 @@ body.simple-mode .sheet-toggle-fields.expanded {
     margin: 2px;
 }
 
+.formula-tag-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    margin: 2px 4px 2px 0;
+    max-width: 100%;
+    width: auto;
+}
+
 .transformation-steps {
     margin-top: 20px;
 }
 
 .transformation-steps h4 {
-    margin: 0 0 12px 0;
+    margin: 0 0 10px 0;
     color: #00d4ff;
+    font-size: 1rem;
 }
 
 .transformation-step {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 6px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     overflow: hidden;
 }
 
 .step-header {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 10px 12px;
+    gap: 8px;
+    padding: 8px 10px;
     cursor: pointer;
     user-select: none;
 }
@@ -1442,9 +1491,9 @@ body.simple-mode .sheet-toggle-fields.expanded {
 .step-number {
     background: rgba(0, 212, 255, 0.2);
     color: #00d4ff;
-    padding: 2px 8px;
+    padding: 2px 6px;
     border-radius: 4px;
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     font-weight: 500;
 }
 
@@ -1452,6 +1501,7 @@ body.simple-mode .sheet-toggle-fields.expanded {
     flex: 1;
     font-weight: 500;
     color: #e0e0e0;
+    font-size: 0.85rem;
 }
 
 .step-toggle {
@@ -1464,14 +1514,14 @@ body.simple-mode .sheet-toggle-fields.expanded {
 }
 
 .step-details {
-    padding: 0 12px 12px;
+    padding: 0 10px 10px;
     animation: fadeIn 0.2s ease-out;
 }
 
 .step-description {
-    margin: 8px 0;
+    margin: 6px 0;
     color: #ccc;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .columns-section {
@@ -1479,30 +1529,364 @@ body.simple-mode .sheet-toggle-fields.expanded {
 }
 
 .columns-section h5 {
-    margin: 0 0 8px 0;
-    font-size: 0.85rem;
+    margin: 0 0 6px 0;
+    font-size: 0.8rem;
     color: #888;
 }
 
 .columns-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 4px;
 }
 
 .column-tag {
     background: rgba(0, 212, 255, 0.1);
     border: 1px solid rgba(0, 212, 255, 0.2);
     color: #00d4ff;
-    padding: 2px 8px;
+    padding: 1px 6px;
     border-radius: 4px;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
 }
 
 .column-tag.new {
     background: rgba(0, 255, 136, 0.1);
     border-color: rgba(0, 255, 136, 0.3);
     color: #00ff88;
+}
+
+.column-tag.corrected {
+    background: rgba(255, 200, 0, 0.1);
+    border-color: rgba(255, 200, 0, 0.3);
+    color: #ffc800;
+}
+
+.column-tag.validation {
+    background: rgba(255, 69, 96, 0.1);
+    border-color: rgba(255, 69, 96, 0.3);
+    color: #ff4560;
+}
+
+.column-tag.calculation {
+    background: rgba(136, 0, 255, 0.1);
+    border-color: rgba(136, 0, 255, 0.3);
+    color: #8800ff;
+}
+
+.column-tag.small {
+    font-size: 0.7rem;
+    padding: 1px 4px;
+}
+
+.column-tag.added {
+    background: rgba(0, 255, 136, 0.1);
+    border-color: rgba(0, 255, 136, 0.3);
+    color: #00ff88;
+}
+
+.columns-details {
+    margin-top: 8px;
+}
+
+.columns-details summary {
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: #888;
+    user-select: none;
+}
+
+.columns-details summary:hover {
+    color: #aaa;
+}
+
+.columns-list.compact {
+    margin-top: 6px;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+/* Стили для формул и логики */
+.formulas-section,
+.logic-section,
+.validation-section,
+.calculation-section {
+    margin: 12px 0;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.formula-item,
+.logic-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 6px 0;
+    padding: 6px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+.formula-column,
+.logic-column {
+    color: #00d4ff;
+    font-weight: 500;
+    flex-shrink: 0;
+    word-break: normal;
+    white-space: nowrap;
+}
+
+.formula-code,
+.logic-code {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    color: #ff8800;
+    flex: 1;
+    word-break: break-word;
+    white-space: normal;
+    line-height: 1.3;
+}
+
+.rules-section {
+    background: rgba(255, 136, 0, 0.05);
+    border-color: rgba(255, 136, 0, 0.2);
+}
+
+.rules-subsection {
+    margin: 12px 0;
+}
+
+.rules-subsection h5 {
+    margin: 0 0 8px 0;
+    font-size: 0.85rem;
+    color: #ff8800;
+    word-break: normal;
+    white-space: normal;
+}
+
+.formula-tag-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin: 2px;
+}
+
+.copy-formula-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 2px;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.copy-formula-btn:hover {
+    opacity: 1;
+}
+
+.formula-detail,
+.logic-detail {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 8px 0;
+    word-break: normal;
+    white-space: normal;
+}
+
+.load-rules-btn {
+    margin-top: 12px;
+    width: 100%;
+    background: linear-gradient(135deg, #ff8800 0%, #ff6600 100%);
+    border: none;
+}
+
+.load-rules-btn:hover {
+    background: linear-gradient(135deg, #ff9900 0%, #ff7700 100%);
+}
+
+/* Компактные стили для секции правил */
+.info-section.rules-section {
+    padding: 6px 8px;
+    overflow: visible;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.info-section.rules-section h4 {
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+    word-break: normal;
+    white-space: normal;
+}
+
+.rules-subsection {
+    margin: 6px 0;
+    overflow: visible;
+    position: relative;
+    z-index: 1;
+    width: 100%;
+}
+
+.rules-subsection h5 {
+    margin: 0 0 4px 0;
+    font-size: 0.75rem;
+    color: #ff8800;
+    word-break: normal;
+    white-space: normal;
+    position: relative;
+    z-index: 2;
+}
+
+.formula-tag-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    margin: 2px 4px 2px 0;
+    max-width: 100%;
+    width: auto;
+}
+
+.formula-tag {
+    padding: 1px 6px;
+    font-size: 0.75rem;
+    word-break: break-word;
+    white-space: normal;
+    max-width: none;
+    overflow: visible;
+    text-overflow: clip;
+    display: inline-block;
+    line-height: 1.2;
+}
+
+.copy-formula-btn {
+    font-size: 0.7rem;
+    padding: 1px;
+    opacity: 0.5;
+    flex-shrink: 0;
+}
+
+.copy-formula-btn:hover {
+    opacity: 1;
+}
+
+.formula-detail,
+.logic-detail {
+    display: block;
+    margin: 4px 0;
+    font-size: 0.75rem;
+    word-break: break-word;
+    white-space: normal;
+    line-height: 1.2;
+    overflow: visible;
+    position: relative;
+    z-index: 1;
+    width: 100%;
+}
+
+.formula-detail .formula-column,
+.logic-detail .logic-column {
+    font-size: 0.75rem;
+    display: block;
+    word-break: normal;
+    white-space: normal;
+    width: 100%;
+    margin-bottom: 2px;
+    position: relative;
+    z-index: 2;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 2px 4px;
+    border-radius: 3px;
+    color: #00d4ff;
+}
+
+.formula-detail .formula-code,
+.logic-detail .logic-code {
+    font-size: 0.7rem;
+    padding: 4px 8px;
+    word-break: break-word;
+    white-space: pre-wrap;
+    line-height: 1.2;
+    width: 100%;
+    box-sizing: border-box;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    position: relative;
+    z-index: 1;
+    background: rgba(0, 212, 255, 0.1);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    border-radius: 4px;
+    display: block;
+    margin-top: 2px;
+}
+
+.formulas-tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    width: 100%;
+    overflow: visible;
+}
+
+.load-rules-btn {
+    margin-top: 8px;
+    width: auto;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    background: linear-gradient(135deg, #ff8800 0%, #ff6600 100%);
+    border: none;
+}
+
+.load-rules-btn:hover {
+    background: linear-gradient(135deg, #ff9900 0%, #ff7700 100%);
+}
+
+.achievements-section {
+    margin-top: 16px;
+    padding: 12px;
+    background: rgba(0, 255, 136, 0.05);
+    border: 1px solid rgba(0, 255, 136, 0.2);
+    border-radius: 6px;
+}
+
+.achievements-section h4 {
+    margin: 0 0 8px 0;
+    color: #00ff88;
+    font-size: 0.95rem;
+}
+
+.achievements-section ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.achievements-section li {
+    color: #ccc;
+    font-size: 0.85rem;
+    margin: 4px 0;
+}
+
+.loading-state, .no-data-state {
+    text-align: center;
+    padding: 40px;
+    color: #888;
+}
+
+.no-data-state p {
+    margin-bottom: 16px;
+}
+
+.no-files {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+    font-style: italic;
 }
 
 .problems-section {
@@ -1539,21 +1923,4 @@ body.simple-mode .sheet-toggle-fields.expanded {
     margin-top: 16px;
     padding-top: 16px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.loading-state, .no-data-state {
-    text-align: center;
-    padding: 40px;
-    color: #888;
-}
-
-.no-data-state p {
-    margin-bottom: 16px;
-}
-
-.no-files {
-    text-align: center;
-    padding: 40px;
-    color: #666;
-    font-style: italic;
 } 
