@@ -210,7 +210,85 @@ export const useRuleGenerator = (loadedFiles, showToast) => {
         showToast('Правило успешно создано!', 'success');
     };
 
-    const loadExample = (type) => {
+    const loadExample = (exampleData) => {
+        // Если передан объект с данными правила, используем его
+        if (typeof exampleData === 'object' && exampleData !== null) {
+            // Обновляем основные данные правила
+            setRuleData(prev => ({
+                ...prev,
+                ruleName: exampleData.ruleName || '',
+                problem: exampleData.problem || '',
+                priority: exampleData.priority || 50,
+                enabled: exampleData.enabled !== false,
+                conditionMode: exampleData.conditionMode || 'all',
+                complexLogic: exampleData.complexLogic || '',
+                mainAction: exampleData.mainAction || 'fill',
+                actionDetails: exampleData.actionDetails || '',
+                handleConflicts: exampleData.handleConflicts || '',
+                handleErrors: exampleData.handleErrors || 'skip',
+                groupBy: exampleData.groupBy || '',
+                duplicateKeys: exampleData.duplicateKeys || '',
+                duplicateStrategy: exampleData.duplicateStrategy || 'keep_first',
+                requiresRules: exampleData.requiresRules || '',
+                blocksRules: exampleData.blocksRules || '',
+                validationFailAction: exampleData.validationFailAction || 'rollback'
+            }));
+            
+            // Обновляем динамические элементы
+            const newDynamicItems = {
+                dataPreparation: [],
+                conditions: [],
+                validationChecks: [],
+                mergeFields: []
+            };
+            
+            // Добавляем подготовку данных
+            if (exampleData.dataPreparation && Array.isArray(exampleData.dataPreparation)) {
+                newDynamicItems.dataPreparation = exampleData.dataPreparation.map((action, index) => ({
+                    id: Date.now() + index,
+                    action: typeof action === 'string' ? action : action.action
+                }));
+            } else {
+                newDynamicItems.dataPreparation = [{ id: Date.now() }];
+            }
+            
+            // Добавляем условия
+            if (exampleData.conditions && Array.isArray(exampleData.conditions)) {
+                newDynamicItems.conditions = exampleData.conditions.map((condition, index) => ({
+                    id: Date.now() + 100 + index,
+                    field: condition.field || '',
+                    check: condition.check || 'empty',
+                    value: condition.value || ''
+                }));
+            } else {
+                newDynamicItems.conditions = [{ id: Date.now() + 100 }];
+            }
+            
+            // Добавляем проверки
+            if (exampleData.validationChecks && Array.isArray(exampleData.validationChecks)) {
+                newDynamicItems.validationChecks = exampleData.validationChecks.map((check, index) => ({
+                    id: Date.now() + 200 + index,
+                    check: typeof check === 'string' ? check : check.check
+                }));
+            } else {
+                newDynamicItems.validationChecks = [{ id: Date.now() + 200 }];
+            }
+            
+            // Добавляем поля для объединения (если есть)
+            if (exampleData.mergeFields && Array.isArray(exampleData.mergeFields)) {
+                newDynamicItems.mergeFields = exampleData.mergeFields.map((field, index) => ({
+                    id: Date.now() + 300 + index,
+                    field: field.field || '',
+                    strategy: field.strategy || 'first_not_empty'
+                }));
+            }
+            
+            setDynamicItems(newDynamicItems);
+            showToast('Пример правила загружен!', 'success');
+            return;
+        }
+        
+        // Старая логика для обратной совместимости
         const examples = {
             'duplicates': {
                 ruleName: 'Обработка противоречивых дубликатов УЭЦН',
@@ -253,7 +331,7 @@ export const useRuleGenerator = (loadedFiles, showToast) => {
             }
         };
         
-        const example = examples[type];
+        const example = examples[exampleData];
         if (example) {
             setRuleData(prev => ({
                 ...prev,

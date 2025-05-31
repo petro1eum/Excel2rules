@@ -3,6 +3,7 @@ import { useRef, useCallback } from 'react';
 export const useDragDrop = (showToast) => {
     const draggedField = useRef(null);
     const dragHelper = useRef(null);
+    const lastFocusedInput = useRef(null);
 
     const handleFieldDragStart = useCallback((event, fieldName) => {
         draggedField.current = fieldName;
@@ -46,6 +47,11 @@ export const useDragDrop = (showToast) => {
         
         element.classList.add('drop-zone');
         
+        // Отслеживаем фокус на этом элементе
+        element.addEventListener('focus', () => {
+            lastFocusedInput.current = element;
+        });
+        
         // Добавляем индикатор drop
         if (!element.querySelector('.drop-indicator')) {
             const indicator = document.createElement('div');
@@ -77,14 +83,28 @@ export const useDragDrop = (showToast) => {
                 const end = this.selectionEnd || 0;
                 const text = this.value || '';
                 
-                this.value = text.substring(0, start) + fieldName + text.substring(end);
+                // Обновляем значение
+                const newValue = text.substring(0, start) + fieldName + text.substring(end);
+                
+                // Для React нужно использовать нативный setter
+                const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+                const nativeTextareaValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value").set;
+                
+                if (this.tagName === 'INPUT') {
+                    nativeInputValueSetter.call(this, newValue);
+                } else if (this.tagName === 'TEXTAREA') {
+                    nativeTextareaValueSetter.call(this, newValue);
+                }
+                
+                // Создаем и диспатчим событие input для React
+                const inputEvent = new Event('input', { bubbles: true });
+                this.dispatchEvent(inputEvent);
+                
+                // Устанавливаем фокус и позицию курсора
                 this.focus();
                 this.setSelectionRange(start + fieldName.length, start + fieldName.length);
                 
                 showToast(`Поле "${fieldName}" добавлено`, 'success');
-                
-                // Триггерим change событие для автодополнения
-                this.dispatchEvent(new Event('input', { bubbles: true }));
             }
         });
     }, [showToast]);
@@ -135,15 +155,51 @@ export const useDragDrop = (showToast) => {
     }, []);
 
     const insertField = useCallback((fieldName) => {
-        const activeElement = document.activeElement;
-        if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
-            const start = activeElement.selectionStart;
-            const end = activeElement.selectionEnd;
-            const text = activeElement.value;
-            activeElement.value = text.substring(0, start) + fieldName + text.substring(end);
-            activeElement.focus();
-            activeElement.setSelectionRange(start + fieldName.length, start + fieldName.length);
-            showToast(`Поле "${fieldName}" вставлено`);
+        // Сначала пробуем активный элемент
+        let targetElement = document.activeElement;
+        
+        // Если активный элемент не input/textarea, используем последний сфокусированный
+        if (!targetElement || (targetElement.tagName !== 'INPUT' && targetElement.tagName !== 'TEXTAREA')) {
+            targetElement = lastFocusedInput.current;
+        }
+        
+        // Если все еще нет подходящего элемента, ищем первый видимый input
+        if (!targetElement || (targetElement.tagName !== 'INPUT' && targetElement.tagName !== 'TEXTAREA')) {
+            targetElement = document.querySelector('input[type="text"]:not([disabled]):not([readonly]), textarea:not([disabled]):not([readonly])');
+        }
+        
+        if (targetElement && (targetElement.tagName === 'INPUT' || targetElement.tagName === 'TEXTAREA')) {
+            const start = targetElement.selectionStart || 0;
+            const end = targetElement.selectionEnd || 0;
+            const text = targetElement.value || '';
+            
+            // Вычисляем новое значение
+            const newValue = text.substring(0, start) + fieldName + text.substring(end);
+            
+            // Используем нативный setter для обновления значения
+            const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+            const nativeTextareaValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value").set;
+            
+            if (targetElement.tagName === 'INPUT') {
+                nativeInputValueSetter.call(targetElement, newValue);
+            } else if (targetElement.tagName === 'TEXTAREA') {
+                nativeTextareaValueSetter.call(targetElement, newValue);
+            }
+            
+            // Создаем событие input для React
+            const inputEvent = new Event('input', { bubbles: true });
+            targetElement.dispatchEvent(inputEvent);
+            
+            // Фокусируемся и устанавливаем курсор
+            targetElement.focus();
+            targetElement.setSelectionRange(start + fieldName.length, start + fieldName.length);
+            
+            // Обновляем ссылку на последний активный элемент
+            lastFocusedInput.current = targetElement;
+            
+            showToast(`Поле "${fieldName}" вставлено в ${targetElement.placeholder || 'поле'}`, 'success');
+        } else {
+            showToast('Сначала кликните в поле, куда нужно вставить данные', 'warning');
         }
     }, [showToast]);
 

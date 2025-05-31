@@ -71,7 +71,7 @@ function App() {
             cleanupDropZones();
             cleanupDragHelper();
         };
-    }, []);
+    }, [setupAllDropZones, setupDragHelper]);
 
     // Обновление глобальных полей при изменении файлов
     useEffect(() => {
