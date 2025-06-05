@@ -7,6 +7,7 @@ import { useRuleGenerator } from './hooks/useRuleGenerator';
 import FileUploader from './components/FileUploader';
 import ExamplesPanel from './components/ExamplesPanel';
 import FieldsPanel from './components/FieldsPanel';
+
 import Toast from './components/Toast';
 
 function App() {
@@ -576,6 +577,8 @@ function App() {
                 {/* Панель примеров */}
                 <ExamplesPanel onLoadExample={loadExample} />
             </div>
+            
+
             
             {/* Результат */}
             <div className="output-section">

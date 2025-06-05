@@ -19,7 +19,14 @@ const SheetItem = ({ fileId, sheetName, sheetInfo, onToggleSheet, onUpdateSheetA
                     {showFields ? '▼' : '▶'}
                 </button>
                 <div className="sheet-name" title={sheetName}>{sheetName}</div>
-                <div className="sheet-fields-count">{sheetInfo.fieldsCount} полей</div>
+                <div className="sheet-fields-count">
+                    {sheetInfo.fieldsCount} полей
+                    {sheetInfo.rowCount && (
+                        <span style={{ marginLeft: '8px', color: '#666', fontSize: '0.8rem' }}>
+                            ({sheetInfo.rowCount} записей)
+                        </span>
+                    )}
+                </div>
                 <input 
                     type="checkbox" 
                     className="sheet-checkbox"
@@ -59,14 +66,36 @@ const FileItem = ({ fileId, fileInfo, onUpdateFileAlias, onRemoveFile, onShowDeb
     return (
         <div className="file-item">
             <div className="file-item-info">
-                <span className="file-icon">📄</span>
+                <span className="file-icon">{fileInfo.isMdbFile ? '🗄️' : '📄'}</span>
                 <div style={{ flex: 1 }}>
-                    <div className="file-name">{fileInfo.name}</div>
-                    <div className="fields-count">
-                        {fileInfo.hasMultipleSheets ? 
-                            `${totalSheets} листов, выбрано: ${selectedCount}` : 
-                            `${fileInfo.totalFields} полей`}
+                    <div className="file-name">
+                        {fileInfo.name}
+                        {fileInfo.isMdbFile && (
+                            <span style={{ 
+                                marginLeft: '8px', 
+                                background: 'linear-gradient(45deg, #8B4513, #CD853F)',
+                                color: '#fff',
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                                fontSize: '0.7rem',
+                                fontWeight: 'bold'
+                            }}>
+                                ACCESS DB
+                            </span>
+                        )}
                     </div>
+                    <div className="fields-count">
+                        {fileInfo.isMdbFile ? 
+                            `База данных: ${totalSheets} таблиц, выбрано: ${selectedCount}` :
+                            (fileInfo.hasMultipleSheets ? 
+                                `${totalSheets} листов, выбрано: ${selectedCount}` : 
+                                `${fileInfo.totalFields} полей`)}
+                    </div>
+                    {fileInfo.exportDate && (
+                        <div style={{ fontSize: '0.75rem', color: '#888', marginTop: '2px' }}>
+                            Экспортировано: {new Date(fileInfo.exportDate).toLocaleString('ru-RU')}
+                        </div>
+                    )}
                 </div>
                 <div className="file-alias">
                     <label style={{ fontSize: '0.9rem', color: '#666' }}>Алиас:</label>
@@ -97,7 +126,7 @@ const FileItem = ({ fileId, fileInfo, onUpdateFileAlias, onRemoveFile, onShowDeb
             <div className="sheet-selection">
                 {fileInfo.hasMultipleSheets ? (
                     <div className="sheets-header">
-                        <span>📋 Листы файла:</span>
+                        <span>{fileInfo.isMdbFile ? '🗄️ Таблицы базы данных:' : '📋 Листы файла:'}</span>
                         <div className="sheets-actions">
                             <button className="btn-mini" onClick={() => onSelectAllSheets(fileId)}>
                                 Выбрать все
@@ -109,7 +138,7 @@ const FileItem = ({ fileId, fileInfo, onUpdateFileAlias, onRemoveFile, onShowDeb
                     </div>
                 ) : (
                     <div className="sheets-header">
-                        <span>📋 Лист файла:</span>
+                        <span>{fileInfo.isMdbFile ? '🗄️ Таблица базы данных:' : '📋 Лист файла:'}</span>
                     </div>
                 )}
                 {Object.entries(fileInfo.sheets).map(([sheetName, sheetInfo]) => (
@@ -129,7 +158,7 @@ const FileItem = ({ fileId, fileInfo, onUpdateFileAlias, onRemoveFile, onShowDeb
 
 const FileUploader = ({ 
     loadedFiles, 
-    onFileUpload, 
+    onFileUpload,
     onUpdateFileAlias,
     onRemoveFile,
     onShowDebugInfo,
@@ -185,22 +214,24 @@ const FileUploader = ({
                 <input 
                     ref={fileInputRef}
                     type="file" 
-                    accept=".xlsx,.xls" 
+                    accept=".xlsx,.xls,.mdb,.accdb" 
                     multiple 
                     style={{ display: 'none' }}
                     onChange={handleFileChange}
                 />
                 <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>📁</div>
                 <p style={{ marginBottom: '10px', fontWeight: 500 }}>
-                    Перетащите Excel файлы сюда или нажмите для выбора
+                    Перетащите Excel или Access файлы сюда или нажмите для выбора
                 </p>
                 <p style={{ fontSize: '0.85rem', color: '#666' }}>
-                    Можно загрузить несколько файлов (справочники, каталоги, основные данные)
+                    Поддерживаются: Excel (.xlsx, .xls), Access (.mdb, .accdb)
                 </p>
                 <p style={{ fontSize: '0.85rem', color: '#888', marginTop: '8px' }}>
                     ✨ Поддерживаются многостраничные файлы - вы сможете выбрать нужные листы
                 </p>
             </div>
+            
+
             
             {hasFiles && (
                 <div className="files-list" style={{ display: 'block' }}>

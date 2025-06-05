@@ -251,3 +251,9 @@ rollup.config.*.js
 # Add your project-specific ignores here
 .custom/
 local/
+
+# Data files
+public/data/
+public/*.json
+*.mdb
+*.accdb

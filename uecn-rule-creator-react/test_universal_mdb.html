@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест универсальной загрузки MDB</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 10px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        input[type="file"] {
+            margin: 10px 0;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+        }
+        .file-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border-left: 4px solid #007bff;
+        }
+        .table-list {
+            max-height: 300px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .table-item {
+            padding: 8px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+        .table-name {
+            font-weight: bold;
+            color: #495057;
+        }
+        .table-details {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-top: 4px;
+        }
+        .field-list {
+            display: inline-block;
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin: 2px;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Тест универсальной загрузки MDB файлов</h1>
+    
+    <div class="test-card">
+        <h2>1. Выберите MDB или ACCDB файл</h2>
+        <input type="file" id="mdbFileInput" accept=".mdb,.accdb" />
+        <p style="color: #666; font-size: 0.9rem;">
+            Выберите любой файл Microsoft Access (.mdb или .accdb) для тестирования
+        </p>
+        <button onclick="loadSelectedFile()">📁 Загрузить файл</button>
+        <div id="load-result"></div>
+    </div>
+
+    <div class="test-card">
+        <h2>2. Результат обработки</h2>
+        <div id="file-info" style="display: none;">
+            <div class="file-info">
+                <h3 id="file-name"></h3>
+                <div id="file-stats"></div>
+            </div>
+            <div id="tables-list"></div>
+        </div>
+    </div>
+
+    <div class="test-card">
+        <h2>3. Структура для useFileManager</h2>
+        <div id="structure-info" style="display: none;">
+            <p>Структура данных, которая будет передана в useFileManager:</p>
+            <details>
+                <summary style="cursor: pointer; color: #007bff;">Показать JSON структуру (клик)</summary>
+                <pre id="json-structure" style="background: #f8f9fa; padding: 15px; border-radius: 4px; overflow-x: auto; white-space: pre-wrap;"></pre>
+            </details>
+        </div>
+    </div>
+
+    <script type="module">
+        import MDBReader from './node_modules/mdb-reader/dist/mdb-reader.js';
+        import { Buffer } from './node_modules/buffer/index.js';
+        
+        // Полифилл для Buffer в браузере
+        window.Buffer = Buffer;
+        
+        let currentFileData = null;
+
+        window.loadSelectedFile = async function() {
+            const fileInput = document.getElementById('mdbFileInput');
+            const resultDiv = document.getElementById('load-result');
+            const fileInfoDiv = document.getElementById('file-info');
+            const structureInfoDiv = document.getElementById('structure-info');
+            
+            if (!fileInput.files || fileInput.files.length === 0) {
+                resultDiv.innerHTML = '<div class="status error">❌ Пожалуйста, выберите файл</div>';
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            resultDiv.innerHTML = '<div class="status info">⏳ Загружаем и анализируем файл...</div>';
+            
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const buffer = Buffer.from(arrayBuffer);
+                const reader = new MDBReader(buffer);
+                
+                // Получаем все таблицы
+                const tableNames = reader.getTableNames();
+                
+                // Создаем структуру как в useFileManager
+                const fileId = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const alias = file.name.replace(/\.[^/.]+$/, "").replace(/[^а-яА-Яa-zA-Z0-9]/g, '_');
+                
+                const sheets = {};
+                let totalFields = 0;
+                const tablesInfo = [];
+                
+                // Обрабатываем каждую таблицу
+                for (const tableName of tableNames) {
+                    try {
+                        const table = reader.getTable(tableName);
+                        const columnNames = table.getColumnNames();
+                        const rowCount = table.rowCount;
+                        
+                        // Получаем образец данных для описаний
+                        let descriptions = {};
+                        if (rowCount > 0) {
+                            const sampleData = table.getData({ rowLimit: 1 });
+                            if (sampleData.length > 0) {
+                                columnNames.forEach(columnName => {
+                                    const sampleValue = sampleData[0][columnName];
+                                    if (sampleValue !== null && sampleValue !== undefined) {
+                                        const trimmedSample = String(sampleValue).length > 40 ? 
+                                            String(sampleValue).substring(0, 37) + '...' : String(sampleValue);
+                                        descriptions[columnName] = `Пример: ${trimmedSample}`;
+                                    } else {
+                                        descriptions[columnName] = columnName;
+                                    }
+                                });
+                            }
+                        } else {
+                            columnNames.forEach(columnName => {
+                                descriptions[columnName] = columnName;
+                            });
+                        }
+                        
+                        const sheetAlias = tableNames.length > 1 ? 
+                            `${alias}_${tableName.replace(/[^а-яА-Яa-zA-Z0-9]/g, '_')}` : alias;
+                        
+                        sheets[tableName] = {
+                            name: tableName,
+                            alias: sheetAlias,
+                            fields: columnNames,
+                            descriptions: descriptions,
+                            fieldsCount: columnNames.length,
+                            selected: true,
+                            originalIndex: Object.keys(sheets).length,
+                            rowCount: rowCount,
+                            isMdbTable: true
+                        };
+                        
+                        totalFields += columnNames.length;
+                        
+                        tablesInfo.push({
+                            name: tableName,
+                            fields: columnNames,
+                            rowCount: rowCount,
+                            descriptions: descriptions
+                        });
+                        
+                    } catch (tableError) {
+                        console.warn(`Ошибка обработки таблицы ${tableName}:`, tableError);
+                        tablesInfo.push({
+                            name: tableName,
+                            error: tableError.message
+                        });
+                    }
+                }
+                
+                // Создаем полную структуру файла
+                currentFileData = {
+                    id: fileId,
+                    name: file.name,
+                    alias: alias,
+                    sheets: sheets,
+                    totalFields: totalFields,
+                    hasMultipleSheets: tableNames.length > 1,
+                    isMdbFile: true
+                };
+                
+                // Отображаем результаты
+                resultDiv.innerHTML = '<div class="status success">✅ Файл успешно загружен и проанализирован!</div>';
+                
+                // Показываем информацию о файле
+                document.getElementById('file-name').textContent = file.name;
+                document.getElementById('file-stats').innerHTML = `
+                    <strong>Таблиц:</strong> ${tableNames.length}<br>
+                    <strong>Общее количество полей:</strong> ${totalFields}<br>
+                    <strong>Размер файла:</strong> ${(file.size / 1024 / 1024).toFixed(2)} MB<br>
+                    <strong>Алиас:</strong> ${alias}
+                `;
+                
+                // Показываем список таблиц
+                const tablesListDiv = document.getElementById('tables-list');
+                const tablesHtml = tablesInfo.map(tableInfo => {
+                    if (tableInfo.error) {
+                        return `
+                            <div class="table-item">
+                                <div class="table-name" style="color: #dc3545;">❌ ${tableInfo.name}</div>
+                                <div class="table-details">Ошибка: ${tableInfo.error}</div>
+                            </div>
+                        `;
+                    } else {
+                        const fieldsPreview = tableInfo.fields.slice(0, 5).map(field => 
+                            `<span class="field-list">${field}</span>`
+                        ).join('');
+                        const moreFields = tableInfo.fields.length > 5 ? 
+                            `<span style="color: #6c757d;">...еще ${tableInfo.fields.length - 5}</span>` : '';
+                        
+                        return `
+                            <div class="table-item">
+                                <div class="table-name">🗄️ ${tableInfo.name}</div>
+                                <div class="table-details">
+                                    <strong>Записей:</strong> ${tableInfo.rowCount} | 
+                                    <strong>Полей:</strong> ${tableInfo.fields.length}
+                                    <br>
+                                    <div style="margin-top: 6px;">
+                                        ${fieldsPreview} ${moreFields}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }).join('');
+                
+                tablesListDiv.innerHTML = `
+                    <h4>Таблицы в базе данных:</h4>
+                    <div class="table-list">${tablesHtml}</div>
+                `;
+                
+                // Показываем JSON структуру
+                document.getElementById('json-structure').textContent = JSON.stringify(currentFileData, null, 2);
+                
+                // Показываем блоки с информацией
+                fileInfoDiv.style.display = 'block';
+                structureInfoDiv.style.display = 'block';
+                
+            } catch (error) {
+                console.error('Ошибка:', error);
+                resultDiv.innerHTML = `<div class="status error">❌ Ошибка обработки файла: ${error.message}</div>`;
+                fileInfoDiv.style.display = 'none';
+                structureInfoDiv.style.display = 'none';
+            }
+        };
+    </script>
+</body>
+</html> 

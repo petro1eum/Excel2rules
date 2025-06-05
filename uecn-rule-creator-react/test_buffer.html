@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Тест Buffer</title>
+    <script>
+        window.global = window.globalThis;
+        window.process = { env: {} };
+    </script>
+    <script type="module">
+        import { Buffer } from 'buffer';
+        
+        console.log('Buffer imported:', Buffer);
+        
+        try {
+            const testArray = new Uint8Array([1, 2, 3, 4]);
+            const buffer = Buffer.from(testArray);
+            console.log('Buffer created successfully:', buffer);
+            document.getElementById('result').innerHTML = '✅ Buffer работает правильно!';
+        } catch (error) {
+            console.error('Buffer error:', error);
+            document.getElementById('result').innerHTML = '❌ Ошибка Buffer: ' + error.message;
+        }
+    </script>
+</head>
+<body>
+    <h1>Тест Buffer</h1>
+    <div id="result">Загрузка...</div>
+</body>
+</html> 

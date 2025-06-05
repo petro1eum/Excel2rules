@@ -108,11 +108,119 @@ export const useFileManager = (showToast) => {
         return { fieldNames, descriptions };
     };
 
+    const handleMdbFile = useCallback(async (file) => {
+        try {
+            showToast(`Конвертирование MDB файла "${file.name}"...`, 'info');
+            
+            const formData = new FormData();
+            formData.append('mdb_file', file);
+            
+            const response = await fetch('/api/convert-mdb', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Ошибка сервера: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            
+            if (!result.success) {
+                throw new Error(result.error || 'Неизвестная ошибка конвертации');
+            }
+            
+            const fileId = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            const alias = generateFileAlias(file.name);
+            
+            // Обрабатываем полученные таблицы
+            const sheets = {};
+            let totalFields = 0;
+            
+            result.tables.forEach((tableInfo, index) => {
+                const sheetAlias = result.tables.length > 1 ? 
+                    `${alias}_${tableInfo.name.replace(/[^а-яА-Яa-zA-Z0-9]/g, '_')}` : alias;
+                
+                // Создаем описания полей
+                const descriptions = {};
+                tableInfo.columns.forEach(column => {
+                    if (column.sample_value) {
+                        const trimmedSample = String(column.sample_value).length > 40 ? 
+                            String(column.sample_value).substring(0, 37) + '...' : String(column.sample_value);
+                        descriptions[column.name] = `Пример: ${trimmedSample}`;
+                    } else {
+                        descriptions[column.name] = column.name;
+                    }
+                });
+                
+                sheets[tableInfo.name] = {
+                    name: tableInfo.name,
+                    alias: sheetAlias,
+                    fields: tableInfo.columns.map(col => col.name),
+                    descriptions: descriptions,
+                    fieldsCount: tableInfo.columns.length,
+                    selected: true,
+                    originalIndex: index,
+                    rowCount: tableInfo.row_count,
+                    isMdbTable: true
+                };
+                
+                totalFields += tableInfo.columns.length;
+            });
+            
+            const newFile = {
+                id: fileId,
+                name: file.name,
+                alias: alias,
+                sheets: sheets,
+                totalFields: totalFields,
+                hasMultipleSheets: result.tables.length > 1,
+                isMdbFile: true
+            };
+
+            setLoadedFiles(prev => ({
+                ...prev,
+                [fileId]: newFile
+            }));
+            
+            const tableText = result.tables.length > 1 ? 
+                `${result.tables.length} таблиц, ${totalFields} полей` : 
+                `${totalFields} полей`;
+            
+            // Показываем детали для первой таблицы
+            const firstTableName = Object.keys(sheets)[0];
+            if (firstTableName) {
+                const firstTable = sheets[firstTableName];
+                const sampleFields = firstTable.fields.slice(0, 3).join(', ');
+                const detailText = firstTable.fields.length > 3 ? 
+                    `Поля: ${sampleFields}...` : 
+                    `Поля: ${sampleFields}`;
+                
+                showToast(`База данных "${file.name}" загружена (${tableText}). ${detailText}`, 'success');
+            } else {
+                showToast(`База данных "${file.name}" загружена (${tableText})`, 'success');
+            }
+        } catch (error) {
+            showToast(`Ошибка при чтении MDB файла: ${error.message}`, 'error');
+        }
+    }, [generateFileAlias, showToast]);
+
     const handleFile = useCallback((file) => {
         const reader = new FileReader();
         reader.onload = function(e) {
             try {
-                const data = new Uint8Array(e.target.result);
+                const arrayBuffer = e.target.result;
+                
+                // Определяем тип файла по расширению
+                const fileExtension = file.name.toLowerCase().split('.').pop();
+                
+                if (fileExtension === 'mdb' || fileExtension === 'accdb') {
+                    handleMdbFile(file);
+                    return;
+                }
+                
+                // Обработка Excel файлов
+                const data = new Uint8Array(arrayBuffer);
                 const workbook = XLSX.read(data, { type: 'array' });
                 
                 const fileId = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
@@ -181,6 +289,8 @@ export const useFileManager = (showToast) => {
             handleFile(file);
         });
     }, [handleFile]);
+
+
 
     const updateGlobalFields = useCallback(() => {
         const newAvailableFields = [];
